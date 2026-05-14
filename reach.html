@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACO REACH Integrated Dashboard — PY2023 (v4)</title>
+<style>
+:root {
+  --bg1:#fff;--bg2:#f7f8fa;--bg3:#f1f2f4;
+  --t1:#1a1a2e;--t2:#5a6072;--t3:#888;
+  --bd:#e2e5ea;--info:#2563eb;
+  --r-lg:12px;--r-md:8px;
+  --hn:#E24B4A;--st:#378ADD;--ne:#BA7517;
+  --green:#0F6E56;--red:#A32D2D;
+  --sp-width:400px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg1:#1e1e2e;--bg2:#272738;--bg3:#2e2e40;
+  --t1:#e4e4ef;--t2:#9a9ab0;--t3:#6a6a80;
+  --bd:#3a3a4e;--info:#60a5fa;
+}body{background:#16161e}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:0;background:var(--bg2);color:var(--t1)}
+.dash-header{padding:1.5rem 2rem 0;max-width:1340px;margin:0 auto}
+.dash-header h1{font-size:22px;font-weight:600;margin-bottom:4px}
+.dash-header .sub{font-size:14px;color:var(--t2);margin-bottom:1rem}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--bd);padding:0 2rem;max-width:1340px;margin:0 auto;position:sticky;top:0;background:var(--bg2);z-index:50}
+.tab-btn{padding:10px 20px;font-size:14px;font-weight:500;color:var(--t2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:.15s}
+.tab-btn:hover{color:var(--t1)}
+.tab-btn.active{color:var(--info);border-bottom-color:var(--info)}
+.tab-content{display:none;padding:1.5rem 2rem;max-width:1340px;margin:0 auto;transition:margin-right .25s}
+.tab-content.active{display:block}
+body.panel-open .tab-content{margin-right:calc(var(--sp-width) + 20px)}
+body.panel-open .tab-bar{margin-right:calc(var(--sp-width) + 20px)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.kpi{background:var(--bg3);border-radius:var(--r-md);padding:1rem}
+.kpi .label{font-size:12px;color:var(--t2);margin:0 0 4px}
+.kpi .val{font-size:22px;font-weight:500;margin:0}
+.kpi .sub2{font-size:12px;color:var(--t2);margin:4px 0 0}
+.sec{font-size:14px;font-weight:500;color:var(--t2);margin:2rem 0 0.75rem;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.help-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);background:var(--bg1);color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
+.help-btn:hover{border-color:var(--info);color:var(--info);background:var(--bg3)}
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.fin-card{background:var(--bg1);border:.5px solid var(--bd);border-radius:var(--r-lg);padding:1rem 1.25rem;cursor:pointer;transition:.15s}
+.fin-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.fin-card h3{font-size:15px;font-weight:500;margin:0 0 2px}
+.fin-card .cnt{font-size:12px;color:var(--t2);margin:0 0 12px}
+.fin-card .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:.5px solid var(--bd);font-size:13px}
+.fin-card .row:last-child{border-bottom:none}
+.fin-card .rl{color:var(--t2)}
+.fin-card .rv{font-weight:500}
+.def-box{background:var(--bg1);border:.5px solid var(--bd);border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.def-box h4{font-size:14px;font-weight:500;margin:0 0 6px}
+.def-box p{font-size:13px;color:var(--t2);margin:0;line-height:1.6}
+.hl{color:var(--info);font-weight:500}
+.leg{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;font-size:12px;color:var(--t2)}
+.leg span{display:flex;align-items:center;gap:4px}
+.leg .d{width:10px;height:10px;border-radius:2px}
+.cwrap{position:relative;width:100%}
+.insight{background:var(--bg3);border-radius:var(--r-md);padding:12px 16px;margin:12px 0;font-size:13px;color:var(--t2);line-height:1.6}
+.insight strong{color:var(--t1);font-weight:500}
+
+/* Side Panel */
+.side-panel{position:fixed;top:0;right:0;width:var(--sp-width);height:100vh;background:var(--bg1);border-left:1px solid var(--bd);z-index:100;display:flex;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.1);transform:translateX(100%);transition:transform .25s ease}
+.side-panel.open{transform:translateX(0)}
+.sp-resize{position:absolute;top:0;left:-3px;width:6px;height:100%;cursor:col-resize;z-index:101;background:transparent}
+.sp-resize:hover,.sp-resize.active{background:var(--info);opacity:.4}
+.sp-header{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.sp-header h3{font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:6px}
+.sp-header .mode-icon{font-size:14px}
+.sp-close{background:none;border:none;font-size:20px;color:var(--t2);cursor:pointer}
+.sp-close:hover{color:var(--t1)}
+.sp-filter{padding:8px 16px;font-size:12px;color:var(--t2);background:var(--bg3);border-bottom:1px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.sp-filter .badge{display:inline-block;background:var(--info);color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:4px}
+.sort-reset{font-size:11px;color:var(--info);background:none;border:1px solid var(--info);border-radius:4px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+.sort-reset:hover{background:var(--info);color:#fff}
+.sp-body{flex:1;overflow-y:auto;padding:0}
+.sp-table{width:100%;border-collapse:collapse;font-size:12px}
+.sp-table th{position:sticky;top:0;background:var(--bg3);padding:8px 10px;text-align:left;font-weight:500;color:var(--t2);border-bottom:1px solid var(--bd);cursor:pointer;white-space:nowrap;user-select:none}
+.sp-table th:hover{color:var(--info)}
+.sp-table th .sort-ind{font-size:10px;color:var(--info);margin-left:2px}
+.sp-table td{padding:7px 10px;border-bottom:.5px solid var(--bd);color:var(--t1);white-space:nowrap}
+.sp-table tr:hover td{background:var(--bg3)}
+.sp-table tr{cursor:pointer}
+.sp-table .nm-cell{white-space:normal;max-width:160px;font-weight:500}
+
+/* Help terms in sidebar */
+.term{margin-bottom:0;padding:14px 16px;border-bottom:.5px solid var(--bd)}
+.term:last-child{border-bottom:none}
+.term .tname{font-size:14px;font-weight:600;color:var(--t1);margin:0 0 4px}
+.term .tdesc{font-size:13px;color:var(--t2);line-height:1.6;margin:0}
+.term .tdesc strong{color:var(--t1);font-weight:500}
+
+/* ACO Detail */
+.aco-detail{padding:16px}
+.aco-detail .back-btn{font-size:12px;color:var(--info);cursor:pointer;border:none;background:none;margin-bottom:12px;padding:0}
+.aco-detail .back-btn:hover{text-decoration:underline}
+.aco-detail h4{font-size:16px;font-weight:600;margin:0 0 4px}
+.aco-detail .meta{font-size:12px;color:var(--t2);margin:0 0 14px}
+.det-section{margin-bottom:12px}
+.det-section .ds-title{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid var(--bd)}
+.det-row{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.det-row .dl{color:var(--t2)}
+.det-row .dv{font-weight:500}
+.be-grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.be-tag{font-size:11px;padding:2px 7px;border-radius:4px;border:.5px solid var(--bd)}
+.be-tag.yes{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
+.be-tag.no{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+@media(prefers-color-scheme:dark){
+  .be-tag.yes{background:#064e3b;color:#6ee7b7;border-color:#065f46}
+  .be-tag.no{background:#450a0a;color:#fca5a5;border-color:#7f1d1d}
+}
+
+/* Scatter controls */
+.scatter-controls{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.sc-btn{font-size:12px;padding:4px 10px;border:1px solid var(--bd);border-radius:4px;background:var(--bg1);color:var(--t2);cursor:pointer;transition:.15s}
+.sc-btn:hover{border-color:var(--info);color:var(--info)}
+.sc-sep{width:1px;height:20px;background:var(--bd);margin:0 4px}
+.sc-filter{font-size:12px;padding:4px 10px;border:1px solid var(--bd);border-radius:4px;background:var(--bg1);color:var(--t2);cursor:pointer;display:flex;align-items:center;gap:4px;transition:.15s}
+.sc-filter.active{border-color:var(--info);background:var(--bg3)}
+.sc-filter.inactive{opacity:.4}
+.sc-filter .d{width:8px;height:8px;border-radius:2px}
+.scatter-table-wrap{margin-top:12px;max-height:260px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r-md);background:var(--bg1)}
+.scatter-table-wrap table{width:100%;border-collapse:collapse;font-size:12px}
+.scatter-table-wrap th{position:sticky;top:0;background:var(--bg3);padding:7px 10px;text-align:left;font-weight:500;color:var(--t2);border-bottom:1px solid var(--bd);cursor:pointer;user-select:none;white-space:nowrap}
+.scatter-table-wrap th:hover{color:var(--info)}
+.scatter-table-wrap td{padding:6px 10px;border-bottom:.5px solid var(--bd);white-space:nowrap}
+.scatter-table-wrap tr{cursor:pointer}
+.scatter-table-wrap tr:hover td{background:var(--bg3)}
+.scatter-table-wrap tr.hl-row td{background:rgba(37,99,235,.1)}
+.scatter-table-wrap .nm-cell{white-space:normal;max-width:180px;font-weight:500}
+
+@media(max-width:900px){
+  .kpi-grid,.card-grid{grid-template-columns:1fr}
+  .tab-content{padding:1rem}
+  .dash-header{padding:1rem 1rem 0}
+  .tab-bar{padding:0 1rem}
+  body.panel-open .tab-content,body.panel-open .tab-bar{margin-right:0}
+  .side-panel{width:100%!important}
+}
+/* Data List Tab */
+.dt-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.dt-toolbar .dt-info{font-size:13px;color:var(--t2)}
+.dt-toolbar .dt-info strong{color:var(--t1)}
+.dt-filter-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:28px}
+.dt-filter-bar .fbadge{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:var(--info);color:#fff;padding:2px 8px;border-radius:10px}
+.dt-filter-bar .fbadge .fx{cursor:pointer;font-weight:700;margin-left:2px;opacity:.8}
+.dt-filter-bar .fbadge .fx:hover{opacity:1}
+.dt-clear-all{font-size:11px;color:var(--info);background:none;border:1px solid var(--info);border-radius:4px;padding:2px 8px;cursor:pointer}
+.dt-clear-all:hover{background:var(--info);color:#fff}
+.dt-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:var(--r-lg);background:var(--bg1);max-height:calc(100vh - 220px);overflow-y:auto}
+.dt-table{width:100%;border-collapse:collapse;font-size:12px;min-width:1600px}
+.dt-table th{position:sticky;top:0;background:var(--bg3);padding:6px 10px;text-align:left;font-weight:500;color:var(--t2);border-bottom:1px solid var(--bd);white-space:nowrap;user-select:none;z-index:2}
+.dt-table th .th-inner{display:flex;align-items:center;gap:3px;cursor:pointer}
+.dt-table th .th-inner:hover{color:var(--info)}
+.dt-table th .sort-ind{font-size:10px;color:var(--info)}
+.dt-table th .flt-icon{font-size:10px;color:var(--t3);cursor:pointer;padding:2px 4px;border-radius:3px;font-style:italic;letter-spacing:.3px}
+.dt-table th .flt-icon:hover,.dt-table th .flt-icon.active{color:var(--info);background:rgba(37,99,235,.1)}
+.dt-table td{padding:6px 10px;border-bottom:.5px solid var(--bd);white-space:nowrap;color:var(--t1)}
+.dt-table tr{cursor:pointer}
+.dt-table tr:hover td{background:var(--bg3)}
+.dt-table .nm-cell{white-space:normal;max-width:220px;font-weight:500;position:sticky;left:0;background:var(--bg1);z-index:1}
+.dt-table th:first-child{position:sticky;left:0;z-index:3}
+.dt-table tr:hover .nm-cell{background:var(--bg3)}
+/* Filter dropdown */
+.flt-drop{position:absolute;top:100%;left:0;min-width:180px;background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r-md);box-shadow:0 4px 12px rgba(0,0,0,.15);padding:8px;z-index:20;font-size:12px}
+.flt-drop select,.flt-drop input{width:100%;padding:4px 6px;border:1px solid var(--bd);border-radius:4px;font-size:12px;background:var(--bg1);color:var(--t1);margin-bottom:4px}
+.flt-drop .flt-row{display:flex;gap:4px;margin-bottom:4px}
+.flt-drop .flt-row input{flex:1}
+.flt-drop .flt-actions{display:flex;gap:4px;justify-content:flex-end}
+.flt-drop .flt-actions button{font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;border:1px solid var(--bd)}
+.flt-drop .f-apply{background:var(--info);color:#fff;border-color:var(--info)}
+.flt-drop .f-apply:hover{opacity:.9}
+.flt-drop .f-clear{background:var(--bg1);color:var(--t2)}
+.flt-drop .f-clear:hover{background:var(--bg3)}
+
+</style>
+</head>
+<body>
+
+<div class="dash-header">
+<h1>ACO REACH Integrated Dashboard</h1>
+<p class="sub">PY2023 Performance Year &middot; High Needs vs Standard vs New Entrant &middot; 132 ACOs</p>
+</div>
+
+<div class="tab-bar">
+<button class="tab-btn active" data-tab="overview">Overview</button>
+<button class="tab-btn" data-tab="performance">Performance &amp; Profitability</button>
+<button class="tab-btn" data-tab="utilization">Utilization &amp; Benefits</button>
+<button class="tab-btn" data-tab="data">Data List</button>
+</div>
+
+<!-- TAB 1: OVERVIEW -->
+<div id="tab-overview" class="tab-content active">
+<div class="kpi-grid">
+<div class="kpi"><p class="label">Total REACH ACOs</p><p class="val">132</p><p class="sub2">14 High Needs &middot; 105 Standard &middot; 13 New Entrant</p></div>
+<div class="kpi"><p class="label">Total aligned beneficiaries</p><p class="val">2,046,054</p><p class="sub2">$27.5B total benchmark spend</p></div>
+<div class="kpi"><p class="label">Total earned shared savings</p><p class="val">$899.6M</p><p class="sub2">Aggregate savings rate: 3.6%</p></div>
+</div>
+
+<p class="sec">ACO Type Definitions <button class="help-btn" data-help="types">?</button></p>
+<div class="def-box"><h4>&#x1F3E5; High Needs Population ACO</h4><p>ACOs specializing in beneficiaries with <span class="hl">complex medical needs</span>, including multiple chronic conditions and dual-eligible (Medicare + Medicaid) status. Uses an integrated care model similar to PACE. Lower minimum beneficiary threshold (PY2026: 1,400).</p></div>
+<div class="def-box"><h4>&#x1F465; Standard ACO</h4><p>Designed for <span class="hl">experienced organizations</span> serving traditional Medicare FFS population. Includes participants with prior MSSP, NGACO, or Pioneer ACO experience. Minimum 5,000 aligned beneficiaries required.</p></div>
+<div class="def-box"><h4>&#x2728; New Entrant ACO</h4><p>For organizations with limited Medicare FFS experience or those <span class="hl">entering risk-based models for the first time</span>. More than 50% of providers cannot have prior MSSP/NGACO experience. Must progressively increase beneficiary counts.</p></div>
+
+<p class="sec">ACO Type Comparison <button class="help-btn" data-help="comparison">?</button></p>
+<div class="card-grid">
+<div class="fin-card" style="border-top:3px solid var(--hn)" onclick="openPanel('type','High Needs')"><h3>High Needs</h3><p class="cnt">14 ACOs &middot; 21,606 total beneficiaries</p>
+<div class="row"><span class="rl">Avg Dual %</span><span class="rv" style="color:var(--red)">60.1%</span></div>
+<div class="row"><span class="rl">Avg Risk Score</span><span class="rv">4.10</span></div>
+<div class="row"><span class="rl">Avg Beneficiaries</span><span class="rv">1,543</span></div>
+<div class="row"><span class="rl">Benchmark PMPY</span><span class="rv">$39,108</span></div>
+<div class="row"><span class="rl">Avg Savings Rate</span><span class="rv" style="color:var(--green)">14.2%</span></div>
+<div class="row"><span class="rl">Avg Quality Score</span><span class="rv">86.7</span></div>
+<div class="row"><span class="rl">Savings Achievement</span><span class="rv">13/14 (93%)</span></div>
+<div class="row"><span class="rl">Earned / Bene</span><span class="rv">$5,504</span></div></div>
+<div class="fin-card" style="border-top:3px solid var(--st)" onclick="openPanel('type','Standard')"><h3>Standard</h3><p class="cnt">105 ACOs &middot; 1,956,505 total beneficiaries</p>
+<div class="row"><span class="rl">Avg Dual %</span><span class="rv">18.1%</span></div>
+<div class="row"><span class="rl">Avg Risk Score</span><span class="rv">1.14</span></div>
+<div class="row"><span class="rl">Avg Beneficiaries</span><span class="rv">18,633</span></div>
+<div class="row"><span class="rl">Benchmark PMPY</span><span class="rv">$13,071</span></div>
+<div class="row"><span class="rl">Avg Savings Rate</span><span class="rv">3.1%</span></div>
+<div class="row"><span class="rl">Avg Quality Score</span><span class="rv">79.2</span></div>
+<div class="row"><span class="rl">Savings Achievement</span><span class="rv">73/105 (70%)</span></div>
+<div class="row"><span class="rl">Earned / Bene</span><span class="rv">$402</span></div></div>
+<div class="fin-card" style="border-top:3px solid var(--ne)" onclick="openPanel('type','New Entrant')"><h3>New Entrant</h3><p class="cnt">13 ACOs &middot; 67,940 total beneficiaries</p>
+<div class="row"><span class="rl">Avg Dual %</span><span class="rv">24.8%</span></div>
+<div class="row"><span class="rl">Avg Risk Score</span><span class="rv">1.28</span></div>
+<div class="row"><span class="rl">Avg Beneficiaries</span><span class="rv">5,226</span></div>
+<div class="row"><span class="rl">Benchmark PMPY</span><span class="rv">$14,569</span></div>
+<div class="row"><span class="rl">Avg Savings Rate</span><span class="rv">6.8%</span></div>
+<div class="row"><span class="rl">Avg Quality Score</span><span class="rv">73.2</span></div>
+<div class="row"><span class="rl">Savings Achievement</span><span class="rv">9/13 (69%)</span></div>
+<div class="row"><span class="rl">Earned / Bene</span><span class="rv">$738</span></div></div>
+</div>
+</div>
+
+<!-- TAB 2: PERFORMANCE -->
+<div id="tab-performance" class="tab-content">
+<p class="sec">Financial Performance by ACO Type <button class="help-btn" data-help="financial">?</button></p>
+<div class="card-grid">
+<div class="fin-card" style="border-top:3px solid var(--hn)" onclick="openPanel('type','High Needs')"><h3>High Needs</h3><p class="cnt">14 ACOs &middot; 21,606 beneficiaries</p>
+<div class="row"><span class="rl">Total benchmark</span><span class="rv">$834M</span></div>
+<div class="row"><span class="rl">Total expenditure</span><span class="rv">$747M</span></div>
+<div class="row"><span class="rl">Gross savings</span><span class="rv" style="color:var(--green)">$118M</span></div>
+<div class="row"><span class="rl">Earned savings</span><span class="rv" style="color:var(--green)">$114M</span></div>
+<div class="row"><span class="rl">Agg. savings rate</span><span class="rv" style="color:var(--green)">14.2%</span></div>
+<div class="row"><span class="rl">Avg earned/bene</span><span class="rv">$5,504</span></div>
+<div class="row"><span class="rl">Avg quality score</span><span class="rv">86.7</span></div>
+<div class="row"><span class="rl">Savings achievers</span><span class="rv">13/14 (93%)</span></div></div>
+<div class="fin-card" style="border-top:3px solid var(--st)" onclick="openPanel('type','Standard')"><h3>Standard</h3><p class="cnt">105 ACOs &middot; 1,956,505 beneficiaries</p>
+<div class="row"><span class="rl">Total benchmark</span><span class="rv">$25.8B</span></div>
+<div class="row"><span class="rl">Total expenditure</span><span class="rv">$25.0B</span></div>
+<div class="row"><span class="rl">Gross savings</span><span class="rv" style="color:var(--green)">$813M</span></div>
+<div class="row"><span class="rl">Earned savings</span><span class="rv" style="color:var(--green)">$739M</span></div>
+<div class="row"><span class="rl">Agg. savings rate</span><span class="rv">3.2%</span></div>
+<div class="row"><span class="rl">Avg earned/bene</span><span class="rv">$402</span></div>
+<div class="row"><span class="rl">Avg quality score</span><span class="rv">79.2</span></div>
+<div class="row"><span class="rl">Savings achievers</span><span class="rv">73/105 (70%)</span></div></div>
+<div class="fin-card" style="border-top:3px solid var(--ne)" onclick="openPanel('type','New Entrant')"><h3>New Entrant</h3><p class="cnt">13 ACOs &middot; 67,940 beneficiaries</p>
+<div class="row"><span class="rl">Total benchmark</span><span class="rv">$937M</span></div>
+<div class="row"><span class="rl">Total expenditure</span><span class="rv">$880M</span></div>
+<div class="row"><span class="rl">Gross savings</span><span class="rv" style="color:var(--green)">$55M</span></div>
+<div class="row"><span class="rl">Earned savings</span><span class="rv" style="color:var(--green)">$46M</span></div>
+<div class="row"><span class="rl">Agg. savings rate</span><span class="rv">5.9%</span></div>
+<div class="row"><span class="rl">Avg earned/bene</span><span class="rv">$738</span></div>
+<div class="row"><span class="rl">Avg quality score</span><span class="rv">73.2</span></div>
+<div class="row"><span class="rl">Savings achievers</span><span class="rv">9/13 (69%)</span></div></div>
+</div>
+
+<div class="insight"><strong>Key finding:</strong> High Needs ACOs earn 13.7x more per beneficiary ($5,504) than Standard ($402), driven by far higher benchmarks ($39K vs $13K PMPY). Despite serving the most complex patients, 93% achieve savings &mdash; the highest rate of any type.</div>
+
+<p class="sec">Savings Rate Distribution <button class="help-btn" data-help="savings">?</button></p>
+<div class="leg"><span><span class="d" style="background:var(--hn)"></span>High Needs</span><span><span class="d" style="background:var(--st)"></span>Standard</span><span><span class="d" style="background:var(--ne)"></span>New Entrant</span></div>
+<div class="cwrap" style="height:280px"><canvas id="c-dist"></canvas></div>
+<div class="insight"><strong>Distribution pattern:</strong> 64% of High Needs ACOs have savings rates above 15%, while Standard ACOs cluster around 0-5% (34%) and 5-10% (24%). 30% of Standard ACOs are in loss territory vs only 7% of High Needs.</div>
+
+<p class="sec">Profitability Scatter: Savings Rate vs Earned/Bene <button class="help-btn" data-help="scatter">?</button></p>
+<div class="scatter-controls">
+<button class="sc-btn" id="scZoomIn">+ Zoom In</button>
+<button class="sc-btn" id="scZoomOut">&minus; Zoom Out</button>
+<button class="sc-btn" id="scReset">&#8634; Reset</button>
+<span class="sc-sep"></span>
+<button class="sc-filter active" data-stype="High Needs"><span class="d" style="background:var(--hn)"></span>High Needs</button>
+<button class="sc-filter active" data-stype="Standard"><span class="d" style="background:var(--st)"></span>Standard</button>
+<button class="sc-filter active" data-stype="New Entrant"><span class="d" style="background:var(--ne)"></span>New Entrant</button>
+</div>
+<div class="cwrap" style="height:360px"><canvas id="c-scatter"></canvas></div>
+<div class="scatter-table-wrap" id="scatterTableWrap"></div>
+
+<p class="sec">Performance Tier Distribution (%) <button class="help-btn" data-help="tier">?</button></p>
+<div class="cwrap" style="height:200px"><canvas id="c-tier"></canvas></div>
+<div class="insight"><strong>Tier balance:</strong> Performance tiers are relatively balanced across types. High Needs edges ahead with 29% High tier and only 29% Low tier, while Standard has 25% High and 30% Low.</div>
+
+<p class="sec">Profitability Drivers &mdash; Correlation with Savings Rate (Standard) <button class="help-btn" data-help="correlation">?</button></p>
+<div class="cwrap" style="height:300px"><canvas id="c-corr"></canvas></div>
+<div class="insight"><strong>What drives profitability:</strong> For Standard ACOs, <strong>risk score</strong> (r=+0.41) is the strongest positive correlator &mdash; higher-acuity populations generate more savings. <strong>Quality score</strong> (r=+0.23) and <strong>capitation %</strong> (r=+0.16) also help. <strong>Dual %</strong> (r=-0.20) hurts &mdash; social complexity adds cost beyond what benchmarks offset.</div>
+
+<p class="sec">Loss ACOs: Geographic &amp; Structural Patterns <button class="help-btn" data-help="loss">?</button></p>
+<div class="card-grid">
+<div class="fin-card" style="border-top:3px solid var(--hn)" onclick="openPanel('loss','High Needs')"><h3>High Needs losses</h3><p class="cnt">1 / 14 ACOs (7%)</p>
+<div class="row"><span class="rl">Loss ACOs</span><span class="rv">1</span></div>
+<div class="row"><span class="rl">Deepest loss</span><span class="rv" style="color:var(--red)">-10.2%</span></div>
+<div class="row"><span class="rl">Loss state</span><span class="rv">TX</span></div></div>
+<div class="fin-card" style="border-top:3px solid var(--st)" onclick="openPanel('loss','Standard')"><h3>Standard losses</h3><p class="cnt">31 / 105 ACOs (30%)</p>
+<div class="row"><span class="rl">Loss ACOs</span><span class="rv" style="color:var(--red)">31</span></div>
+<div class="row"><span class="rl">Deepest loss</span><span class="rv" style="color:var(--red)">-15.4%</span></div>
+<div class="row"><span class="rl">Top loss states</span><span class="rv">CA(7), AZ(4)</span></div>
+<div class="row"><span class="rl">Avg loss rate</span><span class="rv" style="color:var(--red)">-3.6%</span></div></div>
+<div class="fin-card" style="border-top:3px solid var(--ne)" onclick="openPanel('loss','New Entrant')"><h3>New Entrant losses</h3><p class="cnt">4 / 13 ACOs (31%)</p>
+<div class="row"><span class="rl">Loss ACOs</span><span class="rv" style="color:var(--red)">4</span></div>
+<div class="row"><span class="rl">Deepest loss</span><span class="rv" style="color:var(--red)">-3.8%</span></div>
+<div class="row"><span class="rl">Top loss states</span><span class="rv">CA, NJ, MI, FL</span></div></div>
+</div>
+</div>
+
+<!-- TAB 3: UTILIZATION -->
+<div id="tab-utilization" class="tab-content">
+<p class="sec">Utilization Intensity Comparison <button class="help-btn" data-help="utilization">?</button></p>
+<div class="leg"><span><span class="d" style="background:var(--hn)"></span>High Needs</span><span><span class="d" style="background:var(--st)"></span>Standard</span><span><span class="d" style="background:var(--ne)"></span>New Entrant</span></div>
+<div class="cwrap" style="height:300px"><canvas id="c-util"></canvas></div>
+<p class="sec">Efficiency Metrics Comparison <button class="help-btn" data-help="efficiency">?</button></p>
+<div class="leg"><span><span class="d" style="background:var(--hn)"></span>High Needs</span><span><span class="d" style="background:var(--st)"></span>Standard</span><span><span class="d" style="background:var(--ne)"></span>New Entrant</span></div>
+<div class="cwrap" style="height:300px"><canvas id="c-eff"></canvas></div>
+<p class="sec">Capitation Model Breakdown (%) <button class="help-btn" data-help="capitation">?</button></p>
+<div class="cwrap" style="height:200px"><canvas id="c-cap"></canvas></div>
+<div class="insight"><strong>Capitation insight:</strong> High Needs and New Entrant ACOs overwhelmingly choose <strong>PCC (Primary Care Capitation)</strong> &mdash; 86% and 92% respectively. Standard ACOs are more diversified with 74% PCC and 26% TCC.</div>
+<p class="sec">Benefit Enhancement Adoption Rate <button class="help-btn" data-help="be_adoption">?</button></p>
+<div class="leg"><span><span class="d" style="background:var(--hn)"></span>High Needs</span><span><span class="d" style="background:var(--st)"></span>Standard</span><span><span class="d" style="background:var(--ne)"></span>New Entrant</span></div>
+<div class="cwrap" style="height:380px"><canvas id="c-be"></canvas></div>
+</div>
+
+<!-- Side Panel (data + help modes) -->
+<div class="side-panel" id="sidePanel">
+<div class="sp-resize" id="spResize"></div>
+<div class="sp-header">
+<h3><span class="mode-icon" id="spIcon">&#x1F4CA;</span> <span id="spTitle">ACO Data</span></h3>
+<button class="sp-close" onclick="closePanel()">&times;</button>
+</div>
+<div class="sp-filter" id="spFilter"></div>
+<div class="sp-body" id="spBody"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- TAB 4: DATA LIST -->
+<div id="tab-data" class="tab-content">
+<div class="dt-toolbar">
+  <div class="dt-info"><strong id="dtCount">132</strong> of 132 ACOs <button class="help-btn" data-help="data_columns" style="margin-left:6px">?</button></div>
+  <div class="dt-filter-bar" id="dtFilterBar"></div>
+</div>
+<div class="dt-wrap"><table class="dt-table" id="dtTable"><thead id="dtHead"></thead><tbody id="dtBody"></tbody></table></div>
+</div>
+
+<script>
+const D=[{"id":"D0004","nm":"Iora Health NE DCE, LLC (DBA Iora Health Network)","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":4.3,"risk":1.25,"bene":15126,"bm":13631,"exp":168042056.04,"gs":37796660.25,"es":37040727.05,"sr":18.33,"gspb":2498.79,"espb":2448.81,"qs":81,"tier":"High","srpa":92.8,"srpp":88.46,"eppp":96.15,"qpp":65.38,"ed":541.6,"readm":15.8,"ip":192.9,"snf":38.5,"snfc":13582,"pcp":74.15,"ups":31.54,"ccg":44.87,"pcap":23.03,"pwi":0,"bep":11.11,"bea":11.11,"bag":94.44,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"AZ","cpx":29.49,"cause":"Low benefit/waiver activation"},{"id":"D0005","nm":"ilumed, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":8.54,"risk":1.12,"bene":58032,"bm":13079,"exp":734690179.07,"gs":25245540.86,"es":24740630.05,"sr":3.33,"gspb":435.03,"espb":426.33,"qs":39,"tier":"Middle","srpa":48.11,"srpp":53.81,"eppp":57.62,"qpp":6.19,"ed":594.4,"readm":16.4,"ip":255.7,"snf":48.5,"snfc":15048,"pcp":75.26,"ups":64.67,"ccg":58.89,"pcap":77.81,"pwi":30.27,"bep":55.56,"bea":55.56,"bag":57.09,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":40.48,"cause":"Readmission pressure"},{"id":"D0006","nm":"Arizona Health Advantage, Inc","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":6.09,"risk":0.97,"bene":3908,"bm":11813,"exp":46536858.35,"gs":-126505.54,"es":-63252.77,"sr":-0.27,"gspb":-32.37,"espb":-16.19,"qs":100,"tier":"Low","srpa":25.38,"srpp":27.14,"eppp":27.14,"qpp":87.14,"ed":554.2,"readm":14.8,"ip":197.5,"snf":33.1,"snfc":13086,"pcp":77.22,"ups":18.57,"ccg":21.43,"pcap":6.18,"pwi":10.04,"bep":88.89,"bea":88.89,"bag":50.53,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"AZ","cpx":13.81,"cause":"Low capitation depth"},{"id":"D0008","nm":"Genuine Health Direct, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":19.51,"risk":1.28,"bene":18472,"bm":15236,"exp":265170213.78,"gs":14703440.84,"es":14409372.03,"sr":5.22,"gspb":795.99,"espb":780.07,"qs":74,"tier":"Middle","srpa":60.98,"srpp":67.14,"eppp":77.62,"qpp":39.05,"ed":638.6,"readm":15.6,"ip":268.1,"snf":44.4,"snfc":14506,"pcp":71.65,"ups":61.71,"ccg":66.67,"pcap":56.85,"pwi":20.58,"bep":44.44,"bea":44.44,"bag":67.49,"be1":true,"be2":false,"be3":true,"be4":true,"be5":true,"be6":false,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":69.05,"cause":"Readmission pressure"},{"id":"D0010","nm":"Primary care alliance, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":6.82,"risk":1.49,"bene":10343,"bm":14125,"exp":132813125.23,"gs":14551336.74,"es":14260310,"sr":9.96,"gspb":1406.88,"espb":1378.74,"qs":99,"tier":"High","srpa":79.17,"srpp":87.14,"eppp":88.1,"qpp":70.95,"ed":639.5,"readm":14.6,"ip":270.4,"snf":52.4,"snfc":7303,"pcp":78.03,"ups":43.81,"ccg":30.95,"pcap":87.82,"pwi":46.66,"bep":88.89,"bea":88.89,"bag":32.22,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":45.87,"cause":"Acute admission pressure"},{"id":"D0011","nm":"Renovis Choice Company","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":58.97,"risk":1.59,"bene":3770,"bm":21675,"exp":79390055.35,"gs":3222087.21,"es":3157645.46,"sr":3.94,"gspb":854.67,"espb":837.57,"qs":44,"tier":"Middle","srpa":50.38,"srpp":56.67,"eppp":78.57,"qpp":10,"ed":1141.2,"readm":15.4,"ip":461.3,"snf":133.5,"snfc":20213,"pcp":56.57,"ups":87.14,"ccg":84.6,"pcap":44.77,"pwi":54.71,"bep":100,"bea":100,"bag":22.65,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"MI","cpx":97.62,"cause":"Acute admission pressure"},{"id":"D0012","nm":"Temple Care, Inc","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":20.1,"risk":1,"bene":6220,"bm":12930,"exp":83328443.43,"gs":-2825761.77,"es":-1412880.89,"sr":-3.51,"gspb":-454.3,"espb":-227.15,"qs":21,"tier":"Low","srpa":12.5,"srpp":13.81,"eppp":15.71,"qpp":0.48,"ed":584.4,"readm":15.6,"ip":270.7,"snf":62,"snfc":12332,"pcp":65.55,"ups":58.76,"ccg":70,"pcap":60.47,"pwi":38.9,"bep":77.78,"bea":77.78,"bag":41.66,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"PA","cpx":48.41,"cause":"Readmission pressure"},{"id":"D0015","nm":"Rancho Health Management, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":8.04,"risk":1.09,"bene":17557,"bm":12651,"exp":212806415.64,"gs":9739936.13,"es":9545137.41,"sr":4.39,"gspb":554.76,"espb":543.67,"qs":100,"tier":"Middle","srpa":52.65,"srpp":58.57,"eppp":63.33,"qpp":87.14,"ed":551.2,"readm":15.3,"ip":200.5,"snf":36.3,"snfc":16383,"pcp":73.5,"ups":37.71,"ccg":39.05,"pcap":81.94,"pwi":3.88,"bep":88.89,"bea":88.89,"bag":53.61,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"GA","cpx":33.17,"cause":"SNF/post-acute cost pressure"},{"id":"D0019","nm":"CareMount Value Partners IPA","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":10.07,"risk":1.09,"bene":46854,"bm":15152,"exp":687425168.6,"gs":12987985.48,"es":12728225.77,"sr":1.83,"gspb":277.2,"espb":271.66,"qs":95,"tier":"Middle","srpa":37.5,"srpp":40.48,"eppp":47.14,"qpp":60.95,"ed":544.4,"readm":15.1,"ip":239,"snf":55.5,"snfc":21218,"pcp":74.19,"ups":52.19,"ccg":29.84,"pcap":94.31,"pwi":41.83,"bep":88.89,"bea":88.89,"bag":34.64,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":48.41,"cause":"SNF/post-acute cost pressure"},{"id":"D0020","nm":"Collaborative Care Partners LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":25.51,"risk":1.05,"bene":8031,"bm":11748,"exp":94033635.34,"gs":1454473.5,"es":1425384.03,"sr":1.54,"gspb":181.11,"espb":177.49,"qs":80,"tier":"Middle","srpa":35.98,"srpp":38.57,"eppp":41.43,"qpp":48.1,"ed":732.4,"readm":14.9,"ip":259.4,"snf":66.2,"snfc":12084,"pcp":61.75,"ups":53.24,"ccg":65.56,"pcap":98.31,"pwi":26.97,"bep":55.56,"bea":55.56,"bag":58.73,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"OH","cpx":62.38,"cause":"Acute admission pressure"},{"id":"D0025","nm":"VillageMD Primary Providers ACO II, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":4.7,"risk":1.24,"bene":23252,"bm":15581,"exp":319941689.55,"gs":41950363.66,"es":41111356.39,"sr":11.58,"gspb":1804.16,"espb":1768.08,"qs":82,"tier":"High","srpa":81.44,"srpp":89.05,"eppp":92.86,"qpp":51.43,"ed":519.1,"readm":15.6,"ip":258.5,"snf":34,"snfc":12225,"pcp":75.75,"ups":37.9,"ccg":41.9,"pcap":72.84,"pwi":38.62,"bep":77.78,"bea":77.78,"bag":41.8,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"TX","cpx":41.11,"cause":"Readmission pressure"},{"id":"D0027","nm":"On Belay Health Solutions, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":34.68,"risk":1.05,"bene":8310,"bm":11968,"exp":102205738.28,"gs":-2757026.76,"es":-2757026.76,"sr":-2.77,"gspb":-331.77,"espb":-331.77,"qs":54,"tier":"Low","srpa":14.77,"srpp":16.67,"eppp":11.9,"qpp":17.14,"ed":680.9,"readm":15.7,"ip":278.1,"snf":57.3,"snfc":13826,"pcp":72.09,"ups":72.29,"ccg":72.7,"pcap":5.94,"pwi":1.59,"bep":44.44,"bea":44.44,"bag":76.98,"be1":true,"be2":true,"be3":true,"be4":false,"be5":false,"be6":false,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MA","cpx":56.67,"cause":"Low capitation depth"},{"id":"D0032","nm":"Best Value Transportation, LLC, d/b/a MAX Healthcare #2","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0,"dual":11.8,"risk":1.42,"bene":1992,"bm":14247,"exp":24954330.11,"gs":3303601.62,"es":1251771.51,"sr":11.64,"gspb":1658.43,"espb":628.4,"qs":76,"tier":"High","srpa":82.2,"srpp":73.08,"eppp":50,"qpp":42.31,"ed":606.9,"readm":15.5,"ip":256.5,"snf":61.8,"snfc":12889,"pcp":79.43,"ups":43.08,"ccg":30.77,"pcap":41.11,"pwi":24.24,"bep":77.78,"bea":77.78,"bag":48.99,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"FL","cpx":55.13,"cause":"Readmission pressure"},{"id":"D0033","nm":"agilon health Texas ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":3.74,"risk":1.05,"bene":7904,"bm":13148,"exp":91187273.21,"gs":12402430.19,"es":12154381.58,"sr":11.93,"gspb":1569.13,"espb":1537.75,"qs":100,"tier":"High","srpa":83.71,"srpp":90.95,"eppp":91.9,"qpp":87.14,"ed":485.4,"readm":15.1,"ip":202,"snf":25.3,"snfc":13174,"pcp":78.81,"ups":15.62,"ccg":15.56,"pcap":75.9,"pwi":0.11,"bep":22.22,"bea":22.22,"bag":88.83,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"TX","cpx":24.29,"cause":"Low benefit/waiver activation"},{"id":"D0034","nm":"Indiana University Health ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":12.12,"risk":1.05,"bene":45408,"bm":12425,"exp":535961362.07,"gs":30312380.01,"es":14559258.35,"sr":5.37,"gspb":667.56,"espb":320.63,"qs":93,"tier":"Middle","srpa":63.26,"srpp":70,"eppp":50,"qpp":58.57,"ed":665.9,"readm":15,"ip":253,"snf":59,"snfc":15400,"pcp":70.81,"ups":60.1,"ccg":52.38,"pcap":40.98,"pwi":40.71,"bep":77.78,"bea":77.78,"bag":40.76,"be1":true,"be2":true,"be3":true,"be4":false,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"IN","cpx":49.05,"cause":"Geographic dispersion"},{"id":"D0036","nm":"Complete Health Accountable Care LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":4.98,"risk":1.49,"bene":8539,"bm":14578,"exp":103742958.34,"gs":20904356.2,"es":20486269.08,"sr":16.79,"gspb":2448.1,"espb":2399.14,"qs":100,"tier":"High","srpa":91.29,"srpp":98.57,"eppp":98.57,"qpp":87.14,"ed":559.9,"readm":15.1,"ip":273.8,"snf":37.6,"snfc":11897,"pcp":73.53,"ups":33.71,"ccg":33.65,"pcap":4.21,"pwi":2.58,"bep":66.67,"bea":66.67,"bag":65.37,"be1":true,"be2":true,"be3":true,"be4":true,"be5":false,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"AL","cpx":41.75,"cause":"Low capitation depth"},{"id":"D0042","nm":"Revere Health Collaborative Network, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":4.94,"risk":1.08,"bene":14585,"bm":12249,"exp":181220860.46,"gs":-3057733.91,"es":-3057733.91,"sr":-1.71,"gspb":-209.65,"espb":-209.65,"qs":100,"tier":"Low","srpa":17.05,"srpp":18.57,"eppp":16.67,"qpp":87.14,"ed":539.9,"readm":13.9,"ip":187,"snf":43.9,"snfc":20168,"pcp":73.53,"ups":32.19,"ccg":23.81,"pcap":48.51,"pwi":39.05,"bep":77.78,"bea":77.78,"bag":41.58,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"UT","cpx":35.08,"cause":"SNF/post-acute cost pressure"},{"id":"D0045","nm":"CareAllies Accountable Care Solutions, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":21.43,"risk":1.14,"bene":5539,"bm":14205,"exp":77161810.71,"gs":2964523.36,"es":2905232.89,"sr":3.77,"gspb":535.21,"espb":524.5,"qs":100,"tier":"Middle","srpa":48.86,"srpp":54.76,"eppp":60.48,"qpp":87.14,"ed":637.1,"readm":15.1,"ip":273.9,"snf":45.2,"snfc":14932,"pcp":71.68,"ups":54.48,"ccg":48.25,"pcap":75.22,"pwi":8,"bep":33.33,"bea":33.33,"bag":79.33,"be1":false,"be2":true,"be3":false,"be4":false,"be5":true,"be6":false,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"TX","cpx":72.54,"cause":"Acute admission pressure"},{"id":"D0048","nm":"Pathways Accountable Care, LLC d/b/a Pathways Health Partners","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":11.6,"risk":1.42,"bene":15176,"bm":15693,"exp":223127510.16,"gs":17761097.19,"es":17405875.24,"sr":7.46,"gspb":1170.34,"espb":1146.93,"qs":73,"tier":"High","srpa":71.59,"srpp":78.57,"eppp":83.33,"qpp":33.81,"ed":727.2,"readm":15.9,"ip":321.6,"snf":81,"snfc":14660,"pcp":77.83,"ups":84.76,"ccg":65.08,"pcap":25.29,"pwi":39.41,"bep":88.89,"bea":88.89,"bag":35.85,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":57.3,"cause":"Acute admission pressure"},{"id":"D0052","nm":"Bluerock Care Community LLC (DBA: Penn Ave Health)","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":7.59,"risk":0.9,"bene":8488,"bm":10030,"exp":81950813.7,"gs":2685371.42,"es":2631663.99,"sr":3.15,"gspb":316.37,"espb":310.05,"qs":95,"tier":"Middle","srpa":46.97,"srpp":52.38,"eppp":49.05,"qpp":60.95,"ed":478.8,"readm":15.4,"ip":143.7,"snf":29.8,"snfc":25583,"pcp":71.55,"ups":32.86,"ccg":38.57,"pcap":25.15,"pwi":18.94,"bep":88.89,"bea":88.89,"bag":46.09,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"HI","cpx":42.7,"cause":"SNF/post-acute cost pressure"},{"id":"D0056","nm":"agilon health Northeast Ohio ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":5.08,"risk":1.22,"bene":11007,"bm":11416,"exp":110750086.76,"gs":15200636.31,"es":14896623.58,"sr":12.1,"gspb":1381,"espb":1353.38,"qs":99,"tier":"High","srpa":84.47,"srpp":91.9,"eppp":87.14,"qpp":70.95,"ed":508.1,"readm":15.4,"ip":237,"snf":40.2,"snfc":11369,"pcp":79.06,"ups":30,"ccg":26.83,"pcap":65.93,"pwi":0.35,"bep":22.22,"bea":22.22,"bag":88.71,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"OH","cpx":36.03,"cause":"Low benefit/waiver activation"},{"id":"D0059","nm":"St. Luke's Clinic Coordinated Care, Ltd","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":8.9,"risk":1.05,"bene":25580,"bm":11505,"exp":290005030.69,"gs":6141328.29,"es":6018501.72,"sr":2.09,"gspb":240.08,"espb":235.28,"qs":100,"tier":"Middle","srpa":38.26,"srpp":41.43,"eppp":45.24,"qpp":87.14,"ed":596.3,"readm":13.4,"ip":176.4,"snf":36.7,"snfc":14369,"pcp":75.34,"ups":24.48,"ccg":26.19,"pcap":93.56,"pwi":0,"bep":33.33,"bea":33.33,"bag":83.33,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"ID","cpx":38.57,"cause":"Low benefit/waiver activation"},{"id":"D0061","nm":"CVS Accountable Care Organization, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":16.94,"risk":1.16,"bene":76524,"bm":16335,"exp":1256846393.52,"gs":-8967822.56,"es":-8967822.56,"sr":-0.72,"gspb":-117.19,"espb":-117.19,"qs":98,"tier":"Low","srpa":22.35,"srpp":24.29,"eppp":20.48,"qpp":67.14,"ed":620.7,"readm":15.3,"ip":293,"snf":59.9,"snfc":21292,"pcp":72.85,"ups":71.43,"ccg":49.84,"pcap":38.6,"pwi":25.38,"bep":88.89,"bea":88.89,"bag":42.87,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":65.56,"cause":"Acute admission pressure"},{"id":"D0062","nm":"PraxisCare, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":9.79,"risk":0.95,"bene":22560,"bm":10171,"exp":230248665.58,"gs":-221594.7,"es":-221594.7,"sr":-0.1,"gspb":-9.82,"espb":-9.82,"qs":100,"tier":"Low","srpa":26.14,"srpp":28.1,"eppp":28.1,"qpp":87.14,"ed":507.5,"readm":13.9,"ip":158.5,"snf":24.7,"snfc":16239,"pcp":74.1,"ups":18.48,"ccg":16.83,"pcap":47.17,"pwi":58.57,"bep":100,"bea":100,"bag":20.72,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"OR","cpx":25.24,"cause":"SNF/post-acute cost pressure"},{"id":"D0063","nm":"Oak Street Health Medicare Partners LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":27.47,"risk":1.54,"bene":10602,"bm":14978,"exp":127256241.48,"gs":32303819.97,"es":31657743.57,"sr":20.34,"gspb":3046.96,"espb":2986.02,"qs":56,"tier":"High","srpa":95.83,"srpp":99.52,"eppp":99.52,"qpp":19.52,"ed":797.9,"readm":15.5,"ip":272.8,"snf":60.8,"snfc":15482,"pcp":63.6,"ups":76.95,"ccg":83.81,"pcap":43.99,"pwi":17.84,"bep":22.22,"bea":22.22,"bag":79.97,"be1":true,"be2":false,"be3":true,"be4":true,"be5":false,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"IL","cpx":89.05,"cause":"Geographic dispersion"},{"id":"D0067","nm":"Northern Michigan Health Network dba NPO-CIN","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":7.47,"risk":0.93,"bene":7936,"bm":10282,"exp":81330386.99,"gs":267747.55,"es":262392.6,"sr":0.33,"gspb":33.74,"espb":33.06,"qs":78,"tier":"Middle","srpa":29.17,"srpp":30.95,"eppp":32.86,"qpp":44.76,"ed":455,"readm":15.4,"ip":186.2,"snf":28.6,"snfc":12098,"pcp":66.58,"ups":14.95,"ccg":47.46,"pcap":41.88,"pwi":7.48,"bep":22.22,"bea":22.22,"bag":85.15,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MI","cpx":14.76,"cause":"Low benefit/waiver activation"},{"id":"D0068","nm":"Physicians Healthcare Collaborative","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":3.8,"risk":1.27,"bene":86450,"bm":14196,"exp":1107515873.27,"gs":118574479.19,"es":116202989.6,"sr":9.66,"gspb":1371.6,"espb":1344.16,"qs":100,"tier":"High","srpa":76.89,"srpp":84.29,"eppp":86.19,"qpp":87.14,"ed":512.3,"readm":15.3,"ip":243.3,"snf":45.3,"snfc":12712,"pcp":79.3,"ups":33.62,"ccg":22.54,"pcap":65.87,"pwi":59.81,"bep":100,"bea":100,"bag":20.09,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":32.54,"cause":"Geographic dispersion"},{"id":"D0071","nm":"Asaar Medical Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":8.6,"risk":1.15,"bene":6932,"bm":11975,"exp":84808415.37,"gs":-959572.5,"es":-959572.5,"sr":-1.16,"gspb":-138.43,"espb":-138.43,"qs":53,"tier":"Low","srpa":19.32,"srpp":21.43,"eppp":19.52,"qpp":14.76,"ed":626.5,"readm":15.3,"ip":238.5,"snf":48.2,"snfc":12639,"pcp":75.95,"ups":42.86,"ccg":42.54,"pcap":18.49,"pwi":44.93,"bep":88.89,"bea":88.89,"bag":33.09,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":38.89,"cause":"Geographic dispersion"},{"id":"D0077","nm":"Regal Medical Group dba Heritage Innovation Center","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":20.21,"risk":1.06,"bene":3494,"bm":14108,"exp":51695755.24,"gs":-1738381.99,"es":-869191,"sr":-3.53,"gspb":-497.53,"espb":-248.77,"qs":36,"tier":"Low","srpa":11.74,"srpp":12.86,"eppp":13.81,"qpp":3.33,"ed":514.8,"readm":15.5,"ip":232.1,"snf":47.6,"snfc":22348,"pcp":65.26,"ups":52.67,"ccg":58.41,"pcap":97.59,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"CA","cpx":56.03,"cause":"Low benefit/waiver activation"},{"id":"D0078","nm":"Central Valley Community Partners LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":31.23,"risk":1.28,"bene":4492,"bm":17708,"exp":87234319.99,"gs":-9628618.14,"es":-3627976.57,"sr":-12.1,"gspb":-2143.5,"espb":-807.65,"qs":73,"tier":"Low","srpa":1.14,"srpp":1.43,"eppp":3.33,"qpp":33.81,"ed":743.5,"readm":15.6,"ip":286.1,"snf":71.7,"snfc":25541,"pcp":68.64,"ups":87.9,"ccg":80.32,"pcap":22.28,"pwi":29.2,"bep":77.78,"bea":77.78,"bag":46.51,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":true,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"CA","cpx":79.84,"cause":"SNF/post-acute cost pressure"},{"id":"D0081","nm":"Midwest DCE, LLC","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0,"dual":19.54,"risk":1.25,"bene":1663,"bm":14491,"exp":24419820.27,"gs":-467057.03,"es":-233528.52,"sr":-1.94,"gspb":-280.85,"espb":-140.43,"qs":23,"tier":"Low","srpa":15.53,"srpp":11.54,"eppp":11.54,"qpp":3.85,"ed":672.8,"readm":15.9,"ip":318.7,"snf":77.3,"snfc":14949,"pcp":75.35,"ups":76.15,"ccg":60.26,"pcap":6.82,"pwi":28.47,"bep":88.89,"bea":88.89,"bag":41.32,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NJ","cpx":47.44,"cause":"Readmission pressure"},{"id":"D0084","nm":"Health Partners for the Elderly LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":9.83,"risk":1.25,"bene":7128,"bm":14858,"exp":97844957.74,"gs":7808195.08,"es":7652031.18,"sr":7.37,"gspb":1095.43,"espb":1073.52,"qs":79,"tier":"High","srpa":70.83,"srpp":77.62,"eppp":81.43,"qpp":46.19,"ed":626.6,"readm":15.6,"ip":281.3,"snf":50.8,"snfc":13336,"pcp":78.98,"ups":61.14,"ccg":50.63,"pcap":45.21,"pwi":38.35,"bep":100,"bea":100,"bag":30.83,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":52.54,"cause":"Acute admission pressure"},{"id":"D0086","nm":"American Choice Healthcare, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":20.68,"risk":1.22,"bene":68091,"bm":15577,"exp":1015368710.3,"gs":45067912.63,"es":44166554.37,"sr":4.25,"gspb":661.88,"espb":648.64,"qs":68,"tier":"Middle","srpa":51.14,"srpp":57.62,"eppp":70,"qpp":23.33,"ed":598.8,"readm":15.5,"ip":270.2,"snf":52,"snfc":19675,"pcp":72.06,"ups":66.48,"ccg":55.87,"pcap":10.91,"pwi":0,"bep":33.33,"bea":33.33,"bag":83.33,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":70.48,"cause":"Geographic dispersion"},{"id":"D0088","nm":"Bloom Health Network LLC (d/b/a Bloom Healthcare)","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":18.93,"risk":4.28,"bene":1405,"bm":37407,"exp":42707892.86,"gs":11696466.11,"es":11462536.79,"sr":22.25,"gspb":8324.89,"espb":8158.39,"qs":100,"tier":"High","srpa":97.35,"srpp":82.14,"eppp":75,"qpp":75,"ed":1305.3,"readm":19.2,"ip":474.7,"snf":252.7,"snfc":16749,"pcp":null,"ups":16.43,"ccg":10.71,"pcap":38.27,"pwi":14.81,"bep":55.56,"bea":55.56,"bag":64.81,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"CO","cpx":27.38,"cause":"Low benefit/waiver activation"},{"id":"D0095","nm":"ATLAS IPA, LLC","tp":"High Needs","pg":"High Needs","cap":"TCC","dr":0.03,"dual":90.72,"risk":3.54,"bene":1153,"bm":45023,"exp":42266338.5,"gs":10023394.99,"es":9822927.09,"sr":19.31,"gspb":8693.32,"espb":8519.45,"qs":82,"tier":"Middle","srpa":94.32,"srpp":60.71,"eppp":82.14,"qpp":39.29,"ed":1458.5,"readm":19.9,"ip":653.9,"snf":199.6,"snfc":34319,"pcp":null,"ups":47.14,"ccg":44.64,"pcap":93,"pwi":0,"bep":100,"bea":100,"bag":50,"be1":true,"be2":true,"be3":true,"be4":true,"be5":false,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":65.48,"cause":"SNF/post-acute cost pressure"},{"id":"D0097","nm":"Advanced Illness Partners, LLC","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":68.03,"risk":3.97,"bene":4179,"bm":40009,"exp":142189568.77,"gs":32352042.66,"es":31705001.8,"sr":19.35,"gspb":7741.58,"espb":7586.74,"qs":100,"tier":"Middle","srpa":95.08,"srpp":67.86,"eppp":67.86,"qpp":75,"ed":1575.4,"readm":19.6,"ip":658.8,"snf":419.4,"snfc":17773,"pcp":null,"ups":55.71,"ccg":44.64,"pcap":71.37,"pwi":60.42,"bep":100,"bea":100,"bag":19.79,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"LA","cpx":58.33,"cause":"Geographic dispersion"},{"id":"D0098","nm":"ConcertoCare ACO REACH, LLC","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":51.58,"risk":2.02,"bene":2284,"bm":19477,"exp":40619672.77,"gs":4253576.97,"es":4168505.43,"sr":9.56,"gspb":1862.34,"espb":1825.09,"qs":80,"tier":"Middle","srpa":76.14,"srpp":57.69,"eppp":80.77,"qpp":50,"ed":1089.5,"readm":14.7,"ip":359.9,"snf":98,"snfc":17708,"pcp":66.67,"ups":71.54,"ccg":62.82,"pcap":74.6,"pwi":21.93,"bep":33.33,"bea":33.33,"bag":72.37,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"WA","cpx":83.33,"cause":"Acute admission pressure"},{"id":"D0099","nm":"VillageMD Primary Providers ACO III, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":3.56,"risk":1.23,"bene":19924,"bm":13437,"exp":259667303.96,"gs":8012868.58,"es":7852611.21,"sr":2.99,"gspb":402.17,"espb":394.13,"qs":100,"tier":"Middle","srpa":44.32,"srpp":49.05,"eppp":54.76,"qpp":87.14,"ed":543.9,"readm":15.3,"ip":218.1,"snf":40,"snfc":13877,"pcp":77.97,"ups":33.33,"ccg":29.52,"pcap":66.51,"pwi":38.71,"bep":77.78,"bea":77.78,"bag":41.75,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"AZ","cpx":28.41,"cause":"Readmission pressure"},{"id":"D0100","nm":"VillageMD Primary Providers ACO IV, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":9.09,"risk":1.28,"bene":13263,"bm":13845,"exp":166825661,"gs":16694632.19,"es":16360739.55,"sr":9.09,"gspb":1258.74,"espb":1233.56,"qs":80,"tier":"High","srpa":74.62,"srpp":82.38,"eppp":85.24,"qpp":48.1,"ed":550.8,"readm":15.6,"ip":251.8,"snf":44.6,"snfc":15345,"pcp":75.75,"ups":55.14,"ccg":45.4,"pcap":71.86,"pwi":39.69,"bep":77.78,"bea":77.78,"bag":41.27,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"GA","cpx":55.08,"cause":"Readmission pressure"},{"id":"D0101","nm":"Auxilium Health Network","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":38.07,"risk":1.37,"bene":2918,"bm":18442,"exp":61779248.49,"gs":-8286151.03,"es":-8286151.03,"sr":-15.4,"gspb":-2839.67,"espb":-2839.67,"qs":22,"tier":"Low","srpa":0.38,"srpp":0.48,"eppp":0.48,"qpp":1.43,"ed":812.4,"readm":15.6,"ip":339.3,"snf":85.3,"snfc":30289,"pcp":60.71,"ups":93.43,"ccg":90,"pcap":77.92,"pwi":34,"bep":66.67,"bea":66.67,"bag":49.67,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"CA","cpx":90.32,"cause":"SNF/post-acute cost pressure"},{"id":"D0102","nm":"VillageMD Primary Providers ACO, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":8.27,"risk":1.04,"bene":12713,"bm":11652,"exp":145715293.36,"gs":2050442.24,"es":2009433.4,"sr":1.38,"gspb":161.29,"espb":158.06,"qs":100,"tier":"Middle","srpa":34.47,"srpp":36.67,"eppp":36.67,"qpp":87.14,"ed":583,"readm":14.9,"ip":210.4,"snf":53.6,"snfc":14121,"pcp":71.16,"ups":37.52,"ccg":38.25,"pcap":70.05,"pwi":46.3,"bep":77.78,"bea":77.78,"bag":37.96,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"CO","cpx":30.95,"cause":"Geographic dispersion"},{"id":"D0105","nm":"VillageMD Primary Providers ACO V, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":18.38,"risk":1.3,"bene":5121,"bm":16036,"exp":70082812.68,"gs":12064322.71,"es":11823036.26,"sr":14.69,"gspb":2355.85,"espb":2308.74,"qs":100,"tier":"High","srpa":89.02,"srpp":96.67,"eppp":97.62,"qpp":87.14,"ed":620.1,"readm":15.1,"ip":269.7,"snf":45.8,"snfc":16837,"pcp":70.68,"ups":55.43,"ccg":49.21,"pcap":63.65,"pwi":39.95,"bep":77.78,"bea":77.78,"bag":41.14,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"NJ","cpx":58.57,"cause":"SNF/post-acute cost pressure"},{"id":"D0106","nm":"VillageMD New Hampshire ACO, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":6.94,"risk":1.16,"bene":9190,"bm":14037,"exp":106930065.36,"gs":21587675.92,"es":21155922.4,"sr":16.73,"gspb":2349.04,"espb":2302.06,"qs":100,"tier":"High","srpa":90.53,"srpp":97.62,"eppp":96.67,"qpp":87.14,"ed":517.8,"readm":15.4,"ip":227.7,"snf":40.1,"snfc":15067,"pcp":80.66,"ups":40.67,"ccg":26.51,"pcap":77.09,"pwi":46.04,"bep":77.78,"bea":77.78,"bag":38.09,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"NH","cpx":43.33,"cause":"SNF/post-acute cost pressure"},{"id":"D0107","nm":"agilon health Coastal ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":2.31,"risk":1.04,"bene":5977,"bm":10730,"exp":64233332.45,"gs":-495282.28,"es":-495282.28,"sr":-0.77,"gspb":-82.86,"espb":-82.86,"qs":93,"tier":"Low","srpa":20.83,"srpp":22.38,"eppp":24.29,"qpp":58.57,"ed":526.1,"readm":15,"ip":169.8,"snf":43.8,"snfc":20045,"pcp":70.81,"ups":32.67,"ccg":34.6,"pcap":65.38,"pwi":0,"bep":11.11,"bea":11.11,"bag":94.44,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"HI","cpx":40.48,"cause":"Low benefit/waiver activation"},{"id":"D0109","nm":"agilon health Northeastern ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":10.62,"risk":1.24,"bene":13047,"bm":12781,"exp":147488572.82,"gs":19569262.58,"es":19177877.33,"sr":11.74,"gspb":1499.91,"espb":1469.91,"qs":100,"tier":"High","srpa":82.95,"srpp":90,"eppp":90,"qpp":87.14,"ed":475.7,"readm":15.4,"ip":200.8,"snf":60.1,"snfc":13652,"pcp":76.68,"ups":38.38,"ccg":27.14,"pcap":55.71,"pwi":0.26,"bep":22.22,"bea":22.22,"bag":88.76,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":50.32,"cause":"Low benefit/waiver activation"},{"id":"D0112","nm":"Accountable Care Coalition of Southeast Texas, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":10.95,"risk":1.18,"bene":10298,"bm":15851,"exp":157599586.07,"gs":5142584.35,"es":5039732.66,"sr":3.15,"gspb":499.38,"espb":489.39,"qs":70,"tier":"Middle","srpa":46.97,"srpp":52.38,"eppp":59.52,"qpp":26.19,"ed":617.5,"readm":16.2,"ip":307.6,"snf":35.6,"snfc":15010,"pcp":70.69,"ups":65.43,"ccg":72.54,"pcap":11.16,"pwi":26.06,"bep":88.89,"bea":88.89,"bag":42.53,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"TX","cpx":56.98,"cause":"Readmission pressure"},{"id":"D0113","nm":"agilon health Pennsylvania ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":6.07,"risk":1.08,"bene":5746,"bm":11619,"exp":64896690.67,"gs":2092193.73,"es":2050349.86,"sr":3.13,"gspb":364.11,"espb":356.83,"qs":72,"tier":"Middle","srpa":45.83,"srpp":50.95,"eppp":52.86,"qpp":30.48,"ed":518.3,"readm":15.4,"ip":268.2,"snf":51.9,"snfc":10563,"pcp":74.09,"ups":42.57,"ccg":37.3,"pcap":60.5,"pwi":0.69,"bep":22.22,"bea":22.22,"bag":88.55,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"PA","cpx":38.89,"cause":"Low benefit/waiver activation"},{"id":"D0114","nm":"agilon health Columbus Ohio ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":3.4,"risk":1.07,"bene":30338,"bm":11298,"exp":309106148.86,"gs":33167311.68,"es":32503965.45,"sr":9.68,"gspb":1093.26,"espb":1071.39,"qs":100,"tier":"High","srpa":77.65,"srpp":85.24,"eppp":80.48,"qpp":87.14,"ed":490.7,"readm":14.8,"ip":184.1,"snf":38.9,"snfc":14304,"pcp":76.84,"ups":19.52,"ccg":13.81,"pcap":71.35,"pwi":0.02,"bep":11.11,"bea":11.11,"bag":94.43,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"OH","cpx":19.21,"cause":"Low benefit/waiver activation"},{"id":"D0115","nm":"Accountable Care Coalition of Direct Contracting, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":18.17,"risk":1.06,"bene":48896,"bm":12233,"exp":600300829.31,"gs":19025.92,"es":18645.4,"sr":0,"gspb":0.39,"espb":0.38,"qs":99,"tier":"Middle","srpa":27.65,"srpp":30,"eppp":30.95,"qpp":70.95,"ed":638.6,"readm":15.2,"ip":230.2,"snf":54.3,"snfc":16019,"pcp":71.44,"ups":56.19,"ccg":52.7,"pcap":15.42,"pwi":32.85,"bep":88.89,"bea":88.89,"bag":39.13,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"CT","cpx":51.9,"cause":"Geographic dispersion"},{"id":"D0116","nm":"agilon health Ohio ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":9.55,"risk":1.25,"bene":9579,"bm":12929,"exp":106834063.65,"gs":17814446.47,"es":17458157.54,"sr":14.38,"gspb":1859.74,"espb":1822.54,"qs":100,"tier":"High","srpa":88.26,"srpp":95.71,"eppp":93.81,"qpp":87.14,"ed":599.9,"readm":15.2,"ip":218.5,"snf":52.5,"snfc":13701,"pcp":79.88,"ups":42.57,"ccg":30.63,"pcap":62.73,"pwi":0.08,"bep":11.11,"bea":11.11,"bag":94.4,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"OH","cpx":49.37,"cause":"Low benefit/waiver activation"},{"id":"D0120","nm":"Cityblock Health DCE, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":89.26,"risk":1.02,"bene":3036,"bm":12717,"exp":35612322.23,"gs":2902793.78,"es":0,"sr":7.52,"gspb":956.12,"espb":0,"qs":41,"tier":"Middle","srpa":73.11,"srpp":80.48,"eppp":30,"qpp":8.57,"ed":1112,"readm":15.2,"ip":290.5,"snf":42.8,"snfc":20715,"pcp":55.4,"ups":67.9,"ccg":77.3,"pcap":11.54,"pwi":1.61,"bep":33.33,"bea":33.33,"bag":82.53,"be1":true,"be2":false,"be3":true,"be4":true,"be5":false,"be6":false,"be7":false,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"DC","cpx":70.63,"cause":"Acute admission pressure"},{"id":"D0124","nm":"AdventHealth ACO Plus, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":1.98,"risk":1.2,"bene":5240,"bm":12151,"exp":59531060.16,"gs":3973770.55,"es":3894295.13,"sr":6.24,"gspb":758.35,"espb":743.19,"qs":100,"tier":"High","srpa":67.05,"srpp":74.76,"eppp":75.71,"qpp":87.14,"ed":514.2,"readm":14.4,"ip":243.3,"snf":34,"snfc":13486,"pcp":79.81,"ups":23.33,"ccg":10,"pcap":25,"pwi":39.57,"bep":100,"bea":100,"bag":30.21,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":24.92,"cause":"Low capitation depth"},{"id":"D0127","nm":"Q Point Health, LLC (DBA Equality Health Direct)","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":8.43,"risk":0.88,"bene":12479,"bm":10743,"exp":143271183.07,"gs":-4860472.16,"es":-2430236.08,"sr":-3.63,"gspb":-389.49,"espb":-194.75,"qs":91,"tier":"Low","srpa":10.98,"srpp":11.9,"eppp":17.62,"qpp":56.19,"ed":527.1,"readm":15.2,"ip":195.4,"snf":30.1,"snfc":14206,"pcp":68.01,"ups":24.1,"ccg":46.51,"pcap":12.99,"pwi":46.38,"bep":88.89,"bea":88.89,"bag":32.37,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"AZ","cpx":12.54,"cause":"Low capitation depth"},{"id":"D0129","nm":"Assurity DCE LLC","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":57.94,"risk":3.65,"bene":913,"bm":34534,"exp":31393981.82,"gs":1567868,"es":1536510.64,"sr":4.97,"gspb":1717.27,"espb":1682.93,"qs":100,"tier":"Low","srpa":57.95,"srpp":25,"eppp":25,"qpp":75,"ed":1468.5,"readm":20.2,"ip":694.4,"snf":320.9,"snfc":15341,"pcp":null,"ups":50.71,"ccg":53.57,"pcap":25,"pwi":44.1,"bep":88.89,"bea":88.89,"bag":33.5,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":27.38,"cause":"Low capitation depth"},{"id":"D0130","nm":"CareMax Health Partners, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":8.31,"risk":1.09,"bene":8448,"bm":13161,"exp":110869342.17,"gs":766045.34,"es":375362.22,"sr":0.69,"gspb":90.68,"espb":44.43,"qs":93,"tier":"Middle","srpa":31.44,"srpp":33.81,"eppp":33.81,"qpp":58.57,"ed":600,"readm":15.4,"ip":264.4,"snf":47,"snfc":14250,"pcp":75.25,"ups":53.05,"ccg":46.19,"pcap":92.54,"pwi":0.41,"bep":22.22,"bea":22.22,"bag":88.69,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":41.11,"cause":"Low benefit/waiver activation"},{"id":"D0131","nm":"CareConnectMD DCE LLC","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":90.66,"risk":5.07,"bene":814,"bm":54632,"exp":32643290.6,"gs":12143706.54,"es":11399285.69,"sr":27.31,"gspb":14918.56,"espb":14004.04,"qs":85,"tier":"High","srpa":99.62,"srpp":96.43,"eppp":96.43,"qpp":46.43,"ed":1428.7,"readm":19,"ip":581.1,"snf":562,"snfc":24801,"pcp":null,"ups":51.43,"ccg":16.07,"pcap":27.19,"pwi":27.66,"bep":77.78,"bea":77.78,"bag":47.28,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"CA","cpx":63.1,"cause":"SNF/post-acute cost pressure"},{"id":"D0132","nm":"Clover Health Partners LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":17.89,"risk":1.2,"bene":54808,"bm":13694,"exp":758935636.17,"gs":-5207522.94,"es":-5207522.94,"sr":-0.69,"gspb":-95.01,"espb":-95.01,"qs":67,"tier":"Low","srpa":23.11,"srpp":25.24,"eppp":22.38,"qpp":21.9,"ed":716.3,"readm":15.6,"ip":297.9,"snf":71.1,"snfc":15584,"pcp":69.99,"ups":83.14,"ccg":76.67,"pcap":18.61,"pwi":46.86,"bep":100,"bea":100,"bag":26.57,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"FL","cpx":65.87,"cause":"Geographic dispersion"},{"id":"D0133","nm":"Renown Direct Contracting Entity, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":9.43,"risk":1.01,"bene":12794,"bm":10908,"exp":147239383.23,"gs":-8161646.5,"es":-8161646.5,"sr":-5.85,"gspb":-637.93,"espb":-637.93,"qs":74,"tier":"Low","srpa":6.44,"srpp":7.14,"eppp":8.1,"qpp":39.05,"ed":613.3,"readm":15.5,"ip":220.8,"snf":30.6,"snfc":15553,"pcp":68.83,"ups":45.52,"ccg":65.08,"pcap":70.77,"pwi":49.04,"bep":88.89,"bea":88.89,"bag":31.03,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NV","cpx":34.29,"cause":"Readmission pressure"},{"id":"D0136","nm":"Castell Accountable Care, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":6.72,"risk":1.14,"bene":54911,"bm":12880,"exp":640489835.49,"gs":64876537.18,"es":63579006.44,"sr":9.17,"gspb":1181.49,"espb":1157.86,"qs":100,"tier":"High","srpa":75.38,"srpp":83.33,"eppp":84.29,"qpp":87.14,"ed":568.6,"readm":13.2,"ip":191.6,"snf":39.6,"snfc":15445,"pcp":72.32,"ups":28.1,"ccg":28.73,"pcap":44.16,"pwi":15.69,"bep":44.44,"bea":44.44,"bag":69.94,"be1":false,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"UT","cpx":43.02,"cause":"Geographic dispersion"},{"id":"D0140","nm":"Esse Health ACO, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":5.42,"risk":1.06,"bene":38862,"bm":12015,"exp":438313345.38,"gs":26547603.92,"es":26016651.85,"sr":5.69,"gspb":683.13,"espb":669.46,"qs":74,"tier":"Middle","srpa":65.53,"srpp":72.86,"eppp":72.86,"qpp":39.05,"ed":538.6,"readm":15.4,"ip":254,"snf":51.1,"snfc":12875,"pcp":74.14,"ups":44.48,"ccg":39.21,"pcap":79.43,"pwi":2.93,"bep":88.89,"bea":88.89,"bag":54.09,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"OH","cpx":27.46,"cause":"Geographic dispersion"},{"id":"D0142","nm":"360 Health DCE Inc","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":57.87,"risk":1.25,"bene":7501,"bm":15762,"exp":123272428.76,"gs":-5065276.36,"es":-5065276.36,"sr":-4.28,"gspb":-675.28,"espb":-675.28,"qs":71,"tier":"Low","srpa":9.47,"srpp":10.95,"eppp":7.14,"qpp":28.57,"ed":664,"readm":15.6,"ip":250.4,"snf":64.2,"snfc":23497,"pcp":70.14,"ups":78.57,"ccg":73.81,"pcap":59.39,"pwi":37.08,"bep":66.67,"bea":66.67,"bag":48.13,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"CA","cpx":63.97,"cause":"SNF/post-acute cost pressure"},{"id":"D0143","nm":"CenterWell Care Solutions, Inc.","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":13.31,"risk":1.34,"bene":4434,"bm":13032,"exp":49969651.14,"gs":7578556.18,"es":7426985.06,"sr":13.11,"gspb":1709.19,"espb":1675.01,"qs":98,"tier":"High","srpa":86.74,"srpp":80.77,"eppp":73.08,"qpp":96.15,"ed":625.1,"readm":15.3,"ip":252.8,"snf":38.8,"snfc":13724,"pcp":72.19,"ups":36.92,"ccg":43.59,"pcap":68.21,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":true,"be2":true,"be3":true,"be4":false,"be5":false,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"TX","cpx":39.74,"cause":"Low benefit/waiver activation"},{"id":"D0147","nm":"Fairview Health Services","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":16.37,"risk":1.12,"bene":27906,"bm":12757,"exp":345759457.01,"gs":9419349.99,"es":4615481.5,"sr":2.65,"gspb":337.54,"espb":165.39,"qs":97,"tier":"Middle","srpa":42.8,"srpp":47.14,"eppp":39.52,"qpp":65.24,"ed":665.7,"readm":14.6,"ip":236,"snf":60.3,"snfc":12977,"pcp":68.16,"ups":46,"ccg":54.29,"pcap":64.88,"pwi":13.82,"bep":44.44,"bea":44.44,"bag":70.87,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MN","cpx":40.95,"cause":"Low benefit/waiver activation"},{"id":"D0148","nm":"United Physicians Association, Inc","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":52.32,"risk":1.68,"bene":3733,"bm":15878,"exp":58501363.37,"gs":1563346.49,"es":1532079.56,"sr":2.64,"gspb":418.79,"espb":410.42,"qs":73,"tier":"Middle","srpa":42.05,"srpp":46.19,"eppp":56.67,"qpp":33.81,"ed":484.4,"readm":15.5,"ip":234.9,"snf":85.6,"snfc":25817,"pcp":67.98,"ups":63.05,"ccg":52.06,"pcap":88.57,"pwi":5.19,"bep":33.33,"bea":33.33,"bag":80.74,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"CA","cpx":97.3,"cause":"Population complexity"},{"id":"D0151","nm":"NeueHealth Advantage ACO, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":26.8,"risk":1.04,"bene":40638,"bm":13833,"exp":605089589.33,"gs":-44539541.36,"es":-44539541.36,"sr":-7.92,"gspb":-1096.01,"espb":-1096.01,"qs":37,"tier":"Low","srpa":3.41,"srpp":3.33,"eppp":1.43,"qpp":4.29,"ed":626.9,"readm":15.4,"ip":221.7,"snf":49.8,"snfc":24056,"pcp":66.2,"ups":59.9,"ccg":68.73,"pcap":8.23,"pwi":18.7,"bep":100,"bea":100,"bag":40.65,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"CA","cpx":54.13,"cause":"SNF/post-acute cost pressure"},{"id":"D0152","nm":"PeaceHealth Direct Contracting LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":16.59,"risk":1.08,"bene":24311,"bm":12530,"exp":295713098.92,"gs":8122472.53,"es":3980011.54,"sr":2.67,"gspb":334.11,"espb":163.71,"qs":97,"tier":"Middle","srpa":43.56,"srpp":48.1,"eppp":38.57,"qpp":65.24,"ed":633.4,"readm":14.2,"ip":210.4,"snf":35.1,"snfc":20134,"pcp":68.69,"ups":38.38,"ccg":48.1,"pcap":34,"pwi":47.85,"bep":88.89,"bea":88.89,"bag":31.63,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"WA","cpx":59.21,"cause":"SNF/post-acute cost pressure"},{"id":"D0154","nm":"The Provider-led REACH ACO LLC","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":16.16,"risk":1.09,"bene":12835,"bm":14699,"exp":195416234.5,"gs":-7083699.44,"es":-7083699.44,"sr":-3.75,"gspb":-551.9,"espb":-551.9,"qs":82,"tier":"Low","srpa":10.23,"srpp":3.85,"eppp":3.85,"qpp":80.77,"ed":614.3,"readm":15.3,"ip":252.7,"snf":60.8,"snfc":23238,"pcp":72.88,"ups":46.15,"ccg":38.46,"pcap":44.62,"pwi":46.48,"bep":88.89,"bea":88.89,"bag":32.32,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"CA","cpx":44.87,"cause":"SNF/post-acute cost pressure"},{"id":"D0155","nm":"America's MDE, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":7.3,"risk":1.17,"bene":3329,"bm":14154,"exp":43545985.41,"gs":3675552.31,"es":3602041.26,"sr":7.8,"gspb":1104.1,"espb":1082.02,"qs":39,"tier":"High","srpa":73.86,"srpp":81.43,"eppp":82.38,"qpp":6.19,"ed":630.1,"readm":15.7,"ip":289.3,"snf":49.6,"snfc":14425,"pcp":71.43,"ups":67.71,"ccg":69.21,"pcap":11.03,"pwi":0,"bep":77.78,"bea":77.78,"bag":61.11,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":38.25,"cause":"Acute admission pressure"},{"id":"D0156","nm":"agilon health Mid-Atlantic ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":4.08,"risk":1.2,"bene":10254,"bm":12409,"exp":111836035.53,"gs":15436448.28,"es":15127719.31,"sr":12.13,"gspb":1505.41,"espb":1475.3,"qs":77,"tier":"High","srpa":85.23,"srpp":92.86,"eppp":90.95,"qpp":43.33,"ed":503.2,"readm":15.6,"ip":229,"snf":42.4,"snfc":12878,"pcp":79.89,"ups":36.29,"ccg":32.54,"pcap":60.28,"pwi":0.06,"bep":22.22,"bea":22.22,"bag":88.86,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NC","cpx":50.63,"cause":"Low benefit/waiver activation"},{"id":"D0160","nm":"Nivano Physicians, Inc. IPA","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":50.21,"risk":1.36,"bene":1203,"bm":18345,"exp":19694449.64,"gs":2419148.41,"es":2370765.44,"sr":10.96,"gspb":2010.93,"espb":1970.71,"qs":81,"tier":"Middle","srpa":80.68,"srpp":65.38,"eppp":88.46,"qpp":65.38,"ed":786.1,"readm":15,"ip":270.2,"snf":71,"snfc":23865,"pcp":64.6,"ups":65.38,"ccg":62.82,"pcap":78.57,"pwi":46.75,"bep":77.78,"bea":77.78,"bag":37.73,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"CA","cpx":78.21,"cause":"SNF/post-acute cost pressure"},{"id":"D0162","nm":"Nevada Care Connect","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":42.84,"risk":5.26,"bene":824,"bm":51098,"exp":33253096,"gs":9244296.61,"es":9059410.68,"sr":21.96,"gspb":11218.81,"espb":10994.43,"qs":44,"tier":"High","srpa":96.59,"srpp":75,"eppp":89.29,"qpp":3.57,"ed":1995.3,"readm":19.7,"ip":847.1,"snf":281.5,"snfc":19123,"pcp":null,"ups":69.29,"ccg":71.43,"pcap":49.68,"pwi":40.35,"bep":77.78,"bea":77.78,"bag":40.94,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NV","cpx":63.1,"cause":"Acute admission pressure"},{"id":"D0171","nm":"Physician Leaders Direct Contracting Entity, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":12.54,"risk":1.24,"bene":29863,"bm":15918,"exp":469884842.91,"gs":4913917.26,"es":4815638.92,"sr":1.03,"gspb":164.55,"espb":161.26,"qs":90,"tier":"Middle","srpa":32.95,"srpp":35.71,"eppp":37.62,"qpp":54.76,"ed":648.7,"readm":15.2,"ip":277.8,"snf":73.1,"snfc":18615,"pcp":75.56,"ups":72.29,"ccg":44.92,"pcap":98.72,"pwi":0,"bep":100,"bea":100,"bag":50,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":63.33,"cause":"Acute admission pressure"},{"id":"D0172","nm":"Subsero Healthcare, LLC d/b/a MAX Healthcare #1","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":4.38,"risk":1.43,"bene":8148,"bm":14197,"exp":99580244.95,"gs":16379907.49,"es":16052309.34,"sr":14.16,"gspb":2010.3,"espb":1970.09,"qs":81,"tier":"High","srpa":87.5,"srpp":94.76,"eppp":95.71,"qpp":50,"ed":491.9,"readm":15.8,"ip":232.3,"snf":48.4,"snfc":12961,"pcp":84.21,"ups":42.86,"ccg":34.6,"pcap":52.76,"pwi":36.15,"bep":88.89,"bea":88.89,"bag":37.48,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":36.35,"cause":"Readmission pressure"},{"id":"D0178","nm":"Alignment Health ACO, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":20.64,"risk":1.14,"bene":7835,"bm":15459,"exp":124542704.55,"gs":-3792321.38,"es":-3792321.38,"sr":-3.13,"gspb":-484.02,"espb":-484.02,"qs":55,"tier":"Low","srpa":14.02,"srpp":15.71,"eppp":10,"qpp":18.57,"ed":537.8,"readm":15.9,"ip":245.7,"snf":51.7,"snfc":23897,"pcp":66.3,"ups":65.81,"ccg":69.52,"pcap":36.34,"pwi":12.06,"bep":77.78,"bea":77.78,"bag":55.08,"be1":true,"be2":true,"be3":true,"be4":true,"be5":false,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":false,"be13":true,"st":"CA","cpx":70,"cause":"Readmission pressure"},{"id":"D0179","nm":"NW Momentum Health Partners ACO","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":17.18,"risk":0.95,"bene":23447,"bm":11644,"exp":276551116.71,"gs":-3405397.06,"es":-1702698.53,"sr":-1.25,"gspb":-145.24,"espb":-72.62,"qs":72,"tier":"Low","srpa":17.8,"srpp":19.52,"eppp":25.24,"qpp":30.48,"ed":680.2,"readm":15,"ip":186.9,"snf":38.6,"snfc":22962,"pcp":66.85,"ups":44.1,"ccg":60.79,"pcap":12.68,"pwi":13.52,"bep":77.78,"bea":77.78,"bag":54.35,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"WA","cpx":36.98,"cause":"SNF/post-acute cost pressure"},{"id":"D0181","nm":"NeueHealth Premier ACO, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":4.05,"risk":1.3,"bene":7080,"bm":12186,"exp":83223631.91,"gs":4361873.73,"es":4274636.26,"sr":5.06,"gspb":616.08,"espb":603.76,"qs":74,"tier":"Middle","srpa":59.47,"srpp":65.24,"eppp":67.14,"qpp":39.05,"ed":535.1,"readm":15.9,"ip":225.1,"snf":40.3,"snfc":12057,"pcp":80.42,"ups":38.38,"ccg":42.22,"pcap":13.74,"pwi":42.51,"bep":100,"bea":100,"bag":28.75,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":44.92,"cause":"Readmission pressure"},{"id":"D0187","nm":"Hudson Accountable Care, LLC d/b/a AdvantageCare ACO","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":22.04,"risk":1.03,"bene":8302,"bm":13555,"exp":111101846.65,"gs":-14226.42,"es":-14226.42,"sr":-0.01,"gspb":-1.71,"espb":-1.71,"qs":87,"tier":"Low","srpa":26.89,"srpp":29.05,"eppp":29.05,"qpp":53.81,"ed":520,"readm":15.3,"ip":223.6,"snf":47.1,"snfc":27610,"pcp":67.94,"ups":48.57,"ccg":49.21,"pcap":88.95,"pwi":0,"bep":22.22,"bea":22.22,"bag":88.89,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"NY","cpx":62.7,"cause":"SNF/post-acute cost pressure"},{"id":"D0203","nm":"Humana Direct Contracting Entity, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":13.96,"risk":1.15,"bene":52458,"bm":11837,"exp":620253871.54,"gs":9411534.7,"es":9223304.01,"sr":1.52,"gspb":179.41,"espb":175.82,"qs":100,"tier":"Middle","srpa":35.23,"srpp":37.62,"eppp":40.48,"qpp":87.14,"ed":477.1,"readm":15.1,"ip":221.3,"snf":40.7,"snfc":15812,"pcp":72.71,"ups":32.76,"ccg":26.35,"pcap":18.16,"pwi":2.08,"bep":100,"bea":100,"bag":48.96,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"TN","cpx":62.06,"cause":"Geographic dispersion"},{"id":"D0207","nm":"Park Nicollet Health Services ACO LLC d/b/a HealthPartners ACO","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":15.94,"risk":1.01,"bene":36107,"bm":11913,"exp":437372262.36,"gs":-7655122.25,"es":-3827561.12,"sr":-1.78,"gspb":-212.01,"espb":-106.01,"qs":70,"tier":"Low","srpa":16.29,"srpp":17.62,"eppp":21.43,"qpp":26.19,"ed":630.1,"readm":15.3,"ip":242,"snf":60.9,"snfc":12528,"pcp":69.8,"ups":50.76,"ccg":58.57,"pcap":48.96,"pwi":32.13,"bep":66.67,"bea":66.67,"bag":50.6,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":false,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"MN","cpx":48.73,"cause":"Care coordination / PCP follow-up gap"},{"id":"D0209","nm":"Triad HealthCare Network, LLC.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":11.22,"risk":1.13,"bene":22341,"bm":11453,"exp":250195597.18,"gs":6693181.69,"es":6559318.06,"sr":2.62,"gspb":299.59,"espb":293.6,"qs":100,"tier":"Middle","srpa":41.29,"srpp":45.24,"eppp":48.1,"qpp":87.14,"ed":577.4,"readm":14.9,"ip":225.1,"snf":41.7,"snfc":14116,"pcp":72.96,"ups":32.76,"ccg":33.17,"pcap":31.61,"pwi":59.22,"bep":100,"bea":100,"bag":20.39,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NC","cpx":62.38,"cause":"Low capitation depth"},{"id":"D0211","nm":"UT Southwestern Accountable Care Network","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":5.73,"risk":1.03,"bene":102525,"bm":13562,"exp":1305325809.09,"gs":80890890.46,"es":37945189.04,"sr":5.82,"gspb":788.99,"espb":370.11,"qs":100,"tier":"Middle","srpa":66.29,"srpp":73.81,"eppp":53.81,"qpp":87.14,"ed":572.5,"readm":15.1,"ip":246.7,"snf":34.8,"snfc":14671,"pcp":70.22,"ups":38.1,"ccg":43.17,"pcap":14.61,"pwi":0.01,"bep":77.78,"bea":77.78,"bag":61.1,"be1":true,"be2":true,"be3":false,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":true,"be13":false,"st":"TX","cpx":18.25,"cause":"Low capitation depth"},{"id":"D0215","nm":"APA ACO Inc.","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":57.63,"risk":1.26,"bene":33590,"bm":15982,"exp":521977620.39,"gs":13511819.55,"es":13241583.16,"sr":2.52,"gspb":402.26,"espb":394.21,"qs":52,"tier":"Middle","srpa":40.53,"srpp":44.29,"eppp":55.71,"qpp":12.38,"ed":516.2,"readm":16,"ip":236.5,"snf":65.2,"snfc":23468,"pcp":60.72,"ups":68.19,"ccg":71.11,"pcap":91.77,"pwi":47.87,"bep":88.89,"bea":88.89,"bag":31.62,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"CA","cpx":88.1,"cause":"Readmission pressure"},{"id":"D0217","nm":"UW Health ACO, Inc.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":12.06,"risk":0.94,"bene":26349,"bm":10055,"exp":277623303.79,"gs":-13058698.89,"es":-6529349.44,"sr":-4.93,"gspb":-495.61,"espb":-247.8,"qs":41,"tier":"Low","srpa":8.71,"srpp":10,"eppp":14.76,"qpp":8.57,"ed":619.9,"readm":15.3,"ip":207.7,"snf":38.5,"snfc":13770,"pcp":69.17,"ups":36.38,"ccg":57.14,"pcap":17.14,"pwi":0.6,"bep":55.56,"bea":55.56,"bag":71.92,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"WI","cpx":40.16,"cause":"Low capitation depth"},{"id":"D0218","nm":"Reliant Medical Group, Inc.","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":23.66,"risk":1.3,"bene":11109,"bm":15086,"exp":146202331.18,"gs":20938517.34,"es":20519747,"sr":12.49,"gspb":1884.82,"espb":1847.13,"qs":39,"tier":"High","srpa":85.98,"srpp":93.81,"eppp":94.76,"qpp":6.19,"ed":573.6,"readm":16,"ip":252.5,"snf":60.2,"snfc":13121,"pcp":68.18,"ups":60,"ccg":71.11,"pcap":80.58,"pwi":9.09,"bep":22.22,"bea":22.22,"bag":84.34,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MA","cpx":75.4,"cause":"Readmission pressure"},{"id":"D0224","nm":"Commonwealth Primary Care ACO LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":4.92,"risk":1,"bene":4492,"bm":12777,"exp":54857858.66,"gs":3064605.72,"es":3003313.61,"sr":5.34,"gspb":682.24,"espb":668.59,"qs":100,"tier":"Middle","srpa":61.74,"srpp":68.1,"eppp":71.9,"qpp":87.14,"ed":521.8,"readm":15.4,"ip":189.4,"snf":33.6,"snfc":13900,"pcp":82.44,"ups":28.1,"ccg":27.46,"pcap":75.11,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":true,"be2":true,"be3":false,"be4":false,"be5":true,"be6":true,"be7":false,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"AZ","cpx":8.73,"cause":"Low benefit/waiver activation"},{"id":"D0227","nm":"Mirra Reach, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":9.34,"risk":1.48,"bene":4767,"bm":15091,"exp":65105930.84,"gs":7081773.83,"es":6940138.35,"sr":9.84,"gspb":1485.58,"espb":1455.87,"qs":74,"tier":"High","srpa":78.41,"srpp":86.19,"eppp":89.05,"qpp":39.05,"ed":682.5,"readm":15.5,"ip":332.7,"snf":57.3,"snfc":13988,"pcp":72.87,"ups":72.1,"ccg":65.4,"pcap":58.84,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":52.54,"cause":"Low benefit/waiver activation"},{"id":"D0236","nm":"Honest ACO of Michigan LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":14.48,"risk":1.22,"bene":9405,"bm":10760,"exp":96857081.94,"gs":5066401.47,"es":4965073.44,"sr":5.01,"gspb":538.69,"espb":527.92,"qs":99,"tier":"Middle","srpa":58.71,"srpp":64.29,"eppp":62.38,"qpp":70.95,"ed":639.2,"readm":15.2,"ip":210.8,"snf":52.4,"snfc":16139,"pcp":78.44,"ups":52.95,"ccg":39.21,"pcap":89.25,"pwi":19.52,"bep":66.67,"bea":66.67,"bag":56.9,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MI","cpx":53.81,"cause":"Geographic dispersion"},{"id":"D0237","nm":"CHESS Genesis, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":12.92,"risk":1.12,"bene":19953,"bm":12338,"exp":245766298.09,"gs":1217053.18,"es":596356.06,"sr":0.49,"gspb":61,"espb":29.89,"qs":99,"tier":"Middle","srpa":29.92,"srpp":31.9,"eppp":31.9,"qpp":70.95,"ed":644.1,"readm":15.4,"ip":249.5,"snf":49.7,"snfc":12853,"pcp":73.9,"ups":50.95,"ccg":54.76,"pcap":40.09,"pwi":0.07,"bep":11.11,"bea":11.11,"bag":94.41,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NC","cpx":64.76,"cause":"Low benefit/waiver activation"},{"id":"D0241","nm":"Honest ACO of New York LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":21.41,"risk":1.13,"bene":6946,"bm":11356,"exp":78877786.85,"gs":446643.9,"es":437711.02,"sr":0.57,"gspb":64.3,"espb":63.02,"qs":99,"tier":"Middle","srpa":30.68,"srpp":32.86,"eppp":34.76,"qpp":70.95,"ed":582,"readm":15.1,"ip":215.5,"snf":71.9,"snfc":13399,"pcp":73.65,"ups":42.86,"ccg":34.6,"pcap":27.32,"pwi":19.76,"bep":77.78,"bea":77.78,"bag":51.23,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":57.94,"cause":"Low capitation depth"},{"id":"D0242","nm":"Pearl Primary Care Network, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":14.66,"risk":1.27,"bene":31327,"bm":15037,"exp":501454137.88,"gs":-30738202.92,"es":-14298759.06,"sr":-6.53,"gspb":-981.2,"espb":-456.44,"qs":67,"tier":"Low","srpa":4.92,"srpp":5.24,"eppp":10.95,"qpp":21.9,"ed":811.6,"readm":15.9,"ip":334.5,"snf":81.9,"snfc":15920,"pcp":73.15,"ups":90.1,"ccg":76.35,"pcap":53.19,"pwi":44,"bep":88.89,"bea":88.89,"bag":33.56,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"SC","cpx":67.14,"cause":"Geographic dispersion"},{"id":"D0243","nm":"Pearl Network, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":19.03,"risk":1.1,"bene":7542,"bm":12237,"exp":97837505.83,"gs":-5522239.32,"es":-5522239.32,"sr":-5.98,"gspb":-732.2,"espb":-732.2,"qs":83,"tier":"Low","srpa":5.68,"srpp":6.19,"eppp":4.29,"qpp":52.86,"ed":595.9,"readm":15.3,"ip":239.9,"snf":53.7,"snfc":18256,"pcp":71.43,"ups":56.57,"ccg":49.05,"pcap":11.92,"pwi":31.26,"bep":88.89,"bea":88.89,"bag":39.93,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NM","cpx":43.97,"cause":"Low capitation depth"},{"id":"D0244","nm":"Hudson Heights REACH ACO, Inc.","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0,"dual":59.61,"risk":1.36,"bene":1488,"bm":20583,"exp":21899901.36,"gs":7699151.53,"es":1651081.04,"sr":25.14,"gspb":5174.16,"espb":1109.6,"qs":96,"tier":"High","srpa":98.86,"srpp":96.15,"eppp":65.38,"qpp":88.46,"ed":556.5,"readm":15.2,"ip":230.5,"snf":43.1,"snfc":28474,"pcp":69.39,"ups":38.46,"ccg":38.46,"pcap":87.76,"pwi":0.93,"bep":0,"bea":0,"bag":99.54,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":83.33,"cause":"Low benefit/waiver activation"},{"id":"D0245","nm":"UpStream GAP Q, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":8.32,"risk":1.01,"bene":33055,"bm":10680,"exp":345660648.53,"gs":7651850.61,"es":7498813.6,"sr":2.17,"gspb":231.49,"espb":226.86,"qs":100,"tier":"Middle","srpa":39.02,"srpp":42.38,"eppp":43.33,"qpp":87.14,"ed":585.4,"readm":14.8,"ip":208.2,"snf":41.6,"snfc":13434,"pcp":70.4,"ups":27.52,"ccg":39.84,"pcap":30.15,"pwi":0,"bep":33.33,"bea":33.33,"bag":83.33,"be1":false,"be2":false,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"VA","cpx":32.54,"cause":"Geographic dispersion"},{"id":"D0248","nm":"Allina Health System","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":13.55,"risk":1.08,"bene":29175,"bm":12237,"exp":341891160.87,"gs":13911267.57,"es":6816521.11,"sr":3.9,"gspb":476.82,"espb":233.64,"qs":100,"tier":"Middle","srpa":49.62,"srpp":55.71,"eppp":44.29,"qpp":87.14,"ed":646.8,"readm":15,"ip":231.6,"snf":60.4,"snfc":13301,"pcp":77.63,"ups":47.9,"ccg":36.35,"pcap":57.35,"pwi":8.6,"bep":22.22,"bea":22.22,"bag":84.59,"be1":true,"be2":true,"be3":false,"be4":true,"be5":true,"be6":true,"be7":false,"be8":false,"be9":false,"be10":true,"be11":false,"be12":false,"be13":false,"st":"MN","cpx":33.49,"cause":"Low benefit/waiver activation"},{"id":"D0251","nm":"UpStream Carolinas, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":6.05,"risk":0.92,"bene":25374,"bm":10938,"exp":303138489.3,"gs":-24869073.54,"es":-24869073.54,"sr":-8.96,"gspb":-980.1,"espb":-980.1,"qs":99,"tier":"Low","srpa":2.65,"srpp":2.38,"eppp":2.38,"qpp":70.95,"ed":594.1,"readm":15.2,"ip":230.6,"snf":30.3,"snfc":14795,"pcp":71.04,"ups":36.48,"ccg":46.19,"pcap":20.61,"pwi":7.01,"bep":33.33,"bea":33.33,"bag":79.83,"be1":false,"be2":false,"be3":false,"be4":false,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"SC","cpx":33.17,"cause":"Low benefit/waiver activation"},{"id":"D0252","nm":"Provider Partners Connect Care, LLC","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":72.5,"risk":3.16,"bene":960,"bm":33461,"exp":31007534.73,"gs":2239678,"es":2194884.44,"sr":6.97,"gspb":2333,"espb":2286.34,"qs":76,"tier":"Middle","srpa":70.08,"srpp":32.14,"eppp":32.14,"qpp":21.43,"ed":1647.4,"readm":20.7,"ip":557.3,"snf":351,"snfc":15151,"pcp":null,"ups":53.57,"ccg":78.57,"pcap":87.23,"pwi":0,"bep":88.89,"bea":88.89,"bag":55.56,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NC","cpx":53.57,"cause":"Readmission pressure"},{"id":"D0253","nm":"North East Medical Services","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":95.73,"risk":0.89,"bene":8281,"bm":8233,"exp":70514966.49,"gs":-2239900.72,"es":-2239900.72,"sr":-3.29,"gspb":-270.49,"espb":-270.49,"qs":74,"tier":"Low","srpa":13.26,"srpp":14.76,"eppp":12.86,"qpp":39.05,"ed":386.3,"readm":15.6,"ip":123.7,"snf":29.2,"snfc":30331,"pcp":68.16,"ups":36.67,"ccg":52.38,"pcap":2.59,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"CA","cpx":58.57,"cause":"Low benefit/waiver activation"},{"id":"D0257","nm":"RGV ACO Health Providers, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":34.55,"risk":1.41,"bene":5629,"bm":13997,"exp":77029297.41,"gs":3995234.83,"es":3915330.14,"sr":5.07,"gspb":709.76,"espb":695.56,"qs":80,"tier":"Middle","srpa":60.23,"srpp":66.19,"eppp":74.76,"qpp":48.1,"ed":660.3,"readm":15.8,"ip":287.4,"snf":61.6,"snfc":12452,"pcp":73.53,"ups":69.62,"ccg":68.25,"pcap":39.63,"pwi":30.76,"bep":77.78,"bea":77.78,"bag":45.73,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"TX","cpx":88.41,"cause":"Readmission pressure"},{"id":"D0259","nm":"HarmonyCares ACO LLC","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":66.84,"risk":4.49,"bene":1541,"bm":24507,"exp":30259560.53,"gs":9075411.87,"es":8893903.63,"sr":24.03,"gspb":5889.3,"espb":5771.51,"qs":100,"tier":"High","srpa":98.11,"srpp":89.29,"eppp":39.29,"qpp":75,"ed":1827.9,"readm":19.6,"ip":445.2,"snf":203.1,"snfc":17083,"pcp":null,"ups":34.29,"ccg":58.93,"pcap":12.44,"pwi":15.26,"bep":33.33,"bea":33.33,"bag":75.7,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MI","cpx":55.95,"cause":"Low capitation depth"},{"id":"D0260","nm":"Accountable Care Organization of Advocate Aurora Health, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":18.96,"risk":1.22,"bene":5269,"bm":14450,"exp":72712868.63,"gs":3571569.51,"es":3500138.12,"sr":4.69,"gspb":677.85,"espb":664.29,"qs":53,"tier":"Middle","srpa":56.44,"srpp":62.38,"eppp":70.95,"qpp":14.76,"ed":767.5,"readm":15.4,"ip":319.8,"snf":61.6,"snfc":13284,"pcp":65.28,"ups":69.52,"ccg":77.94,"pcap":79.4,"pwi":46.14,"bep":88.89,"bea":88.89,"bag":32.48,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":false,"be13":true,"st":"WI","cpx":77.46,"cause":"Acute admission pressure"},{"id":"D0265","nm":"DULY HEALTH AND CARE ACCOUNTABLE CARE ORGANIZATION","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":5.45,"risk":1.06,"bene":43723,"bm":13369,"exp":549454547.83,"gs":33225380.32,"es":32560872.71,"sr":5.68,"gspb":759.91,"espb":744.71,"qs":52,"tier":"Middle","srpa":64.39,"srpp":71.43,"eppp":76.67,"qpp":12.38,"ed":516.4,"readm":15.6,"ip":250.7,"snf":55.4,"snfc":15375,"pcp":73.2,"ups":58,"ccg":46.51,"pcap":85.08,"pwi":12.55,"bep":33.33,"bea":33.33,"bag":77.06,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"IL","cpx":24.6,"cause":"Readmission pressure"},{"id":"D0267","nm":"Physician Partners ACO Reach, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":6.11,"risk":1.21,"bene":5318,"bm":13049,"exp":66303916.42,"gs":3222725.7,"es":3158271.19,"sr":4.64,"gspb":606,"espb":593.88,"qs":96,"tier":"Middle","srpa":55.3,"srpp":60.95,"eppp":65.24,"qpp":62.86,"ed":591.4,"readm":15.4,"ip":271.3,"snf":59.2,"snfc":12482,"pcp":76.01,"ups":53.24,"ccg":41.11,"pcap":13.93,"pwi":10.88,"bep":22.22,"bea":22.22,"bag":83.45,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":44.92,"cause":"Low capitation depth"},{"id":"D0268","nm":"Aledade Accountable Care 128, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":9.43,"risk":0.96,"bene":8778,"bm":10594,"exp":87720666.31,"gs":5278110.71,"es":5172548.49,"sr":5.68,"gspb":601.29,"espb":589.26,"qs":100,"tier":"Middle","srpa":64.39,"srpp":71.43,"eppp":64.29,"qpp":87.14,"ed":489.3,"readm":15.1,"ip":170.8,"snf":34.4,"snfc":14485,"pcp":75.29,"ups":20.57,"ccg":21.59,"pcap":73.26,"pwi":24.21,"bep":22.22,"bea":22.22,"bag":76.78,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NC","cpx":19.05,"cause":"Geographic dispersion"},{"id":"D0276","nm":"ACO REACH South Texas, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":38.81,"risk":1.31,"bene":8768,"bm":13376,"exp":111066120.68,"gs":7720822.87,"es":7566406.41,"sr":6.58,"gspb":880.57,"espb":862.96,"qs":78,"tier":"High","srpa":69.32,"srpp":76.67,"eppp":79.52,"qpp":44.76,"ed":746.9,"readm":15.5,"ip":289.1,"snf":51.7,"snfc":14983,"pcp":73.15,"ups":72.1,"ccg":66.19,"pcap":60.22,"pwi":30.69,"bep":55.56,"bea":55.56,"bag":56.88,"be1":false,"be2":true,"be3":true,"be4":true,"be5":false,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"TX","cpx":86.51,"cause":"Acute admission pressure"},{"id":"D0284","nm":"CINQCARE ACO REACH LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":38.24,"risk":1.09,"bene":4966,"bm":13378,"exp":62151011.12,"gs":3081423.53,"es":3019795.06,"sr":4.64,"gspb":620.5,"espb":608.09,"qs":48,"tier":"Middle","srpa":55.3,"srpp":60.95,"eppp":68.1,"qpp":10.95,"ed":680.5,"readm":15.5,"ip":248.3,"snf":55.7,"snfc":19265,"pcp":64.31,"ups":70.86,"ccg":80.32,"pcap":49.39,"pwi":53.88,"bep":100,"bea":100,"bag":23.06,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":77.3,"cause":"Care coordination / PCP follow-up gap"},{"id":"D0286","nm":"MNO REACH-MI LLC","tp":"New Entrant","pg":"New Entrant","cap":"TCC","dr":0.03,"dual":29.5,"risk":1.08,"bene":1200,"bm":11635,"exp":14270940.65,"gs":-121672.53,"es":-121672.53,"sr":-0.87,"gspb":-101.39,"espb":-101.39,"qs":63,"tier":"Low","srpa":20.08,"srpp":19.23,"eppp":19.23,"qpp":19.23,"ed":679.5,"readm":15.4,"ip":268.3,"snf":52.6,"snfc":11454,"pcp":69.92,"ups":45.38,"ccg":57.69,"pcap":14.97,"pwi":13.19,"bep":66.67,"bea":66.67,"bag":60.07,"be1":false,"be2":true,"be3":false,"be4":false,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":true,"be11":true,"be12":true,"be13":false,"st":"MI","cpx":39.74,"cause":"Low capitation depth"},{"id":"D0288","nm":"COMMUNITY CARE COOPERATIVE, INC.","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":48.17,"risk":1.06,"bene":10958,"bm":14037,"exp":140713839.3,"gs":11545585.17,"es":5089979.83,"sr":7.51,"gspb":1053.62,"espb":464.5,"qs":32,"tier":"High","srpa":72.35,"srpp":79.52,"eppp":58.57,"qpp":2.38,"ed":855.5,"readm":15.7,"ip":281.3,"snf":56.1,"snfc":15064,"pcp":65.08,"ups":79.71,"ccg":91.11,"pcap":2.33,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":true,"be2":false,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"MA","cpx":56.03,"cause":"Low benefit/waiver activation"},{"id":"D0290","nm":"PCMA Cooperative LLC","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0,"dual":71.11,"risk":4.08,"bene":796,"bm":39104,"exp":29846891.04,"gs":1358650.33,"es":665738.66,"sr":4.36,"gspb":1706.85,"espb":836.36,"qs":80,"tier":"Low","srpa":51.89,"srpp":10.71,"eppp":10.71,"qpp":32.14,"ed":1782.9,"readm":20.8,"ip":831.7,"snf":374.2,"snfc":13690,"pcp":null,"ups":66.43,"ccg":85.71,"pcap":69.89,"pwi":14.47,"bep":33.33,"bea":33.33,"bag":76.1,"be1":true,"be2":true,"be3":true,"be4":true,"be5":false,"be6":true,"be7":false,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"FL","cpx":55.95,"cause":"Readmission pressure"},{"id":"D0294","nm":"Optimum NY Independent Practice Association, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":25.99,"risk":1.13,"bene":12865,"bm":12197,"exp":141455086.2,"gs":16898067.6,"es":6751633.43,"sr":10.77,"gspb":1313.49,"espb":524.81,"qs":75,"tier":"High","srpa":79.92,"srpp":88.1,"eppp":61.43,"qpp":42.38,"ed":677.6,"readm":15.5,"ip":227.3,"snf":65.5,"snfc":13531,"pcp":68.64,"ups":60.76,"ccg":74.13,"pcap":17.61,"pwi":6.43,"bep":66.67,"bea":66.67,"bag":63.45,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":68.41,"cause":"Low capitation depth"},{"id":"D0295","nm":"Harbor Health ACO, LLC","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":39.34,"risk":1.02,"bene":1749,"bm":10755,"exp":17553380.7,"gs":1198121.91,"es":1174159.47,"sr":6.37,"gspb":685.03,"espb":671.33,"qs":46,"tier":"Middle","srpa":67.8,"srpp":50,"eppp":57.69,"qpp":11.54,"ed":732.9,"readm":15.5,"ip":232.7,"snf":35.7,"snfc":12616,"pcp":68.25,"ups":36.92,"ccg":71.79,"pcap":100,"pwi":64.03,"bep":100,"bea":100,"bag":17.98,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NY","cpx":60.26,"cause":"Care coordination / PCP follow-up gap"},{"id":"D0298","nm":"Catholic Medical Partners-Accountable Care IPA, INC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":20.31,"risk":1.06,"bene":10655,"bm":10883,"exp":107366557.59,"gs":7491433.54,"es":7341604.87,"sr":6.46,"gspb":703.09,"espb":689.03,"qs":97,"tier":"High","srpa":68.56,"srpp":75.71,"eppp":73.81,"qpp":65.24,"ed":551.6,"readm":15.3,"ip":196.5,"snf":65.3,"snfc":13587,"pcp":71.45,"ups":42.29,"ccg":43.81,"pcap":87.85,"pwi":18.66,"bep":77.78,"bea":77.78,"bag":51.78,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":51.59,"cause":"Low benefit/waiver activation"},{"id":"D0303","nm":"Community Care Contracting, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":11.97,"risk":0.98,"bene":17022,"bm":10287,"exp":173101828.83,"gs":1461126.82,"es":1431904.28,"sr":0.83,"gspb":85.84,"espb":84.12,"qs":100,"tier":"Middle","srpa":32.2,"srpp":34.76,"eppp":35.71,"qpp":87.14,"ed":460.8,"readm":14.8,"ip":197.7,"snf":43.3,"snfc":13626,"pcp":77.15,"ups":19.71,"ccg":10.95,"pcap":84,"pwi":47.19,"bep":66.67,"bea":66.67,"bag":43.07,"be1":true,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":47.78,"cause":"Geographic dispersion"},{"id":"D0304","nm":"Complete Care Collaborative of the Northeast","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":52.47,"risk":3.7,"bene":2508,"bm":37685,"exp":83581149.89,"gs":16786368.31,"es":16450640.94,"sr":17.76,"gspb":6693.13,"espb":6559.27,"qs":100,"tier":"Middle","srpa":92.05,"srpp":46.43,"eppp":53.57,"qpp":75,"ed":1392.7,"readm":19,"ip":540.3,"snf":278.5,"snfc":20062,"pcp":null,"ups":34.29,"ccg":12.5,"pcap":8.16,"pwi":14.63,"bep":100,"bea":100,"bag":42.69,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"CO","cpx":41.67,"cause":"Low capitation depth"},{"id":"D0313","nm":"Vytalize Health 9 ACO LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":13.77,"risk":1.02,"bene":15299,"bm":12201,"exp":188035772.09,"gs":-1403208.51,"es":-1403208.51,"sr":-0.75,"gspb":-91.72,"espb":-91.72,"qs":66,"tier":"Low","srpa":21.59,"srpp":23.33,"eppp":23.33,"qpp":20.48,"ed":634.7,"readm":15.3,"ip":243.7,"snf":54.6,"snfc":14550,"pcp":75.36,"ups":56.57,"ccg":45.71,"pcap":71.73,"pwi":0,"bep":100,"bea":100,"bag":50,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"MN","cpx":31.27,"cause":"Geographic dispersion"},{"id":"D0314","nm":"One Medical ACO, LLC","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":3.36,"risk":0.93,"bene":2884,"bm":13283,"exp":38105164.69,"gs":6429.8,"es":6301.2,"sr":0.02,"gspb":2.23,"espb":2.18,"qs":81,"tier":"Middle","srpa":28.41,"srpp":34.62,"eppp":34.62,"qpp":65.38,"ed":399.2,"readm":15.6,"ip":137.7,"snf":22.6,"snfc":25342,"pcp":76.32,"ups":34.62,"ccg":29.49,"pcap":11.72,"pwi":0,"bep":11.11,"bea":11.11,"bag":94.44,"be1":false,"be2":true,"be3":false,"be4":false,"be5":false,"be6":false,"be7":false,"be8":false,"be9":null,"be10":null,"be11":null,"be12":null,"be13":null,"st":"CA","cpx":3.85,"cause":"Low benefit/waiver activation"},{"id":"D0315","nm":"Medical Home Network REACH ACO","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":41.19,"risk":1.08,"bene":22172,"bm":13807,"exp":308764769.04,"gs":-1602421.57,"es":-1602421.57,"sr":-0.52,"gspb":-72.27,"espb":-72.27,"qs":96,"tier":"Low","srpa":24.62,"srpp":26.19,"eppp":26.19,"qpp":62.86,"ed":876.2,"readm":15.1,"ip":297,"snf":57.7,"snfc":22967,"pcp":67.57,"ups":75.81,"ccg":68.25,"pcap":0.96,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":true,"be2":true,"be3":false,"be4":true,"be5":true,"be6":false,"be7":false,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"OK","cpx":72.54,"cause":"Low benefit/waiver activation"},{"id":"D0316","nm":"Best IPA LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":62.91,"risk":1.29,"bene":6198,"bm":13695,"exp":88924869.48,"gs":-4380489.45,"es":-4380489.45,"sr":-5.16,"gspb":-706.76,"espb":-706.76,"qs":100,"tier":"Low","srpa":7.95,"srpp":9.05,"eppp":5.24,"qpp":87.14,"ed":359.6,"readm":14.8,"ip":199.4,"snf":44.2,"snfc":28947,"pcp":76.05,"ups":32.86,"ccg":10.63,"pcap":71.67,"pwi":53.59,"bep":88.89,"bea":88.89,"bag":28.76,"be1":true,"be2":true,"be3":true,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":94.44,"cause":"SNF/post-acute cost pressure"},{"id":"D0318","nm":"Innovation Care Partners REACH LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":1.23,"risk":1.02,"bene":4876,"bm":11664,"exp":58178078.16,"gs":-686916.78,"es":-686916.78,"sr":-1.21,"gspb":-140.88,"espb":-140.88,"qs":82,"tier":"Low","srpa":18.56,"srpp":20.48,"eppp":18.57,"qpp":51.43,"ed":472.9,"readm":15.6,"ip":202.4,"snf":35.9,"snfc":12679,"pcp":80.5,"ups":27.33,"ccg":29.05,"pcap":57.78,"pwi":32.32,"bep":77.78,"bea":77.78,"bag":44.95,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"AZ","cpx":7.46,"cause":"Readmission pressure"},{"id":"D0324","nm":"NeueHealth Community ACO, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":50.38,"risk":1.02,"bene":20530,"bm":11392,"exp":230846883.94,"gs":7170238.79,"es":7026834.01,"sr":3.07,"gspb":349.26,"espb":342.27,"qs":73,"tier":"Middle","srpa":45.08,"srpp":50,"eppp":51.9,"qpp":33.81,"ed":818.6,"readm":15.7,"ip":254.8,"snf":47.4,"snfc":14546,"pcp":69.35,"ups":68.57,"ccg":83.49,"pcap":1.65,"pwi":3.12,"bep":100,"bea":100,"bag":48.44,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"MI","cpx":63.33,"cause":"Low capitation depth"},{"id":"D0325","nm":"Complete Care Academy Collaborative","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":32.32,"risk":3.87,"bene":2107,"bm":39419,"exp":69997766.39,"gs":13727308.05,"es":13452761.89,"sr":16.53,"gspb":6515.1,"espb":6384.79,"qs":100,"tier":"Middle","srpa":89.77,"srpp":39.29,"eppp":46.43,"qpp":75,"ed":1341.9,"readm":19.3,"ip":660.7,"snf":276.6,"snfc":20049,"pcp":null,"ups":40.71,"ccg":17.86,"pcap":5.16,"pwi":18.75,"bep":100,"bea":100,"bag":40.62,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NJ","cpx":32.14,"cause":"Low capitation depth"},{"id":"D0327","nm":"P3 Health Partners REACH ACO LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":15.39,"risk":1.04,"bene":7546,"bm":13348,"exp":96060620.27,"gs":4584379.92,"es":4492692.32,"sr":4.55,"gspb":607.52,"espb":595.37,"qs":91,"tier":"Middle","srpa":53.41,"srpp":59.52,"eppp":66.19,"qpp":56.19,"ed":616.1,"readm":14.6,"ip":217.7,"snf":32.8,"snfc":21818,"pcp":69.07,"ups":37.24,"ccg":44.92,"pcap":48.58,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"NV","cpx":36.67,"cause":"Low benefit/waiver activation"},{"id":"D0329","nm":"PRIME HEALTHCARE ACO, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0,"dual":6.46,"risk":0.95,"bene":4490,"bm":11083,"exp":47841710.82,"gs":2442911.87,"es":1197026.81,"sr":4.91,"gspb":544.08,"espb":266.6,"qs":53,"tier":"Middle","srpa":57.2,"srpp":63.33,"eppp":46.19,"qpp":14.76,"ed":610.5,"readm":15.3,"ip":265.3,"snf":51.4,"snfc":13323,"pcp":61.63,"ups":50.1,"ccg":64.44,"pcap":84.78,"pwi":46.44,"bep":55.56,"bea":55.56,"bag":49,"be1":true,"be2":false,"be3":false,"be4":true,"be5":false,"be6":true,"be7":true,"be8":false,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"KS","cpx":10.95,"cause":"Acute admission pressure"},{"id":"D0332","nm":"Wellvana Premier Care, LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":10.42,"risk":1.05,"bene":34205,"bm":12021,"exp":408773117.56,"gs":7488736.45,"es":7338961.72,"sr":1.82,"gspb":218.94,"espb":214.56,"qs":70,"tier":"Middle","srpa":36.74,"srpp":39.52,"eppp":42.38,"qpp":26.19,"ed":611.3,"readm":15.5,"ip":221,"snf":35.1,"snfc":14459,"pcp":70.65,"ups":43.52,"ccg":61.9,"pcap":22.51,"pwi":46.01,"bep":88.89,"bea":88.89,"bag":32.55,"be1":true,"be2":true,"be3":true,"be4":false,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"AZ","cpx":34.13,"cause":"Geographic dispersion"},{"id":"D0333","nm":"Tri-Shield Health, Inc. DBA Upperline Plus","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":11.38,"risk":1.47,"bene":19647,"bm":12479,"exp":247071523.36,"gs":-1571540.14,"es":-1571540.14,"sr":-0.64,"gspb":-79.99,"espb":-79.99,"qs":70,"tier":"Low","srpa":23.86,"srpp":26.92,"eppp":26.92,"qpp":26.92,"ed":892.3,"readm":15.7,"ip":265.9,"snf":62.9,"snfc":14634,"pcp":75.61,"ups":66.92,"ccg":62.82,"pcap":1.08,"pwi":46.76,"bep":66.67,"bea":66.67,"bag":43.29,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":60.26,"cause":"Low capitation depth"},{"id":"D0334","nm":"Complete Care Collaborative of the Midwest","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":48.28,"risk":3.66,"bene":2243,"bm":38860,"exp":103668661.21,"gs":-8898067.39,"es":-8898067.39,"sr":-10.21,"gspb":-3967.04,"espb":-3967.04,"qs":71,"tier":"Low","srpa":1.89,"srpp":3.57,"eppp":3.57,"qpp":10.71,"ed":1863.7,"readm":20.4,"ip":905.5,"snf":258.9,"snfc":18585,"pcp":null,"ups":67.86,"ccg":82.14,"pcap":6.13,"pwi":17.31,"bep":100,"bea":100,"bag":41.35,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"TX","cpx":51.19,"cause":"Acute admission pressure"},{"id":"D0335","nm":"Complete Care Collaborative of the South","tp":"High Needs","pg":"High Needs","cap":"PCC","dr":0.03,"dual":39.12,"risk":4.12,"bene":1544,"bm":36530,"exp":56018914.87,"gs":2573839.9,"es":2522363.1,"sr":4.56,"gspb":1666.99,"espb":1633.65,"qs":76,"tier":"Low","srpa":54.17,"srpp":17.86,"eppp":17.86,"qpp":21.43,"ed":1628.1,"readm":20.6,"ip":715.7,"snf":355.5,"snfc":14510,"pcp":null,"ups":59.29,"ccg":71.43,"pcap":8.67,"pwi":14.97,"bep":100,"bea":100,"bag":42.52,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"FL","cpx":36.9,"cause":"Low capitation depth"},{"id":"D0337","nm":"CHS ACO Op Co LLC","tp":"High Needs","pg":"High Needs","cap":"TCC","dr":0.03,"dual":89.82,"risk":3.97,"bene":619,"bm":35245,"exp":17683241.54,"gs":4168818.08,"es":4085441.72,"sr":19.11,"gspb":6734.76,"espb":6600.07,"qs":100,"tier":"Middle","srpa":93.56,"srpp":53.57,"eppp":60.71,"qpp":75,"ed":1536.8,"readm":19.9,"ip":533.1,"snf":390.5,"snfc":18879,"pcp":null,"ups":52.86,"ccg":51.79,"pcap":23.44,"pwi":0,"bep":0,"bea":0,"bag":100,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":true,"be11":false,"be12":true,"be13":false,"st":"MD","cpx":67.86,"cause":"Low benefit/waiver activation"},{"id":"D0340","nm":"BH ACO, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":39.24,"risk":1.12,"bene":3229,"bm":14316,"exp":45140601.6,"gs":1075001.25,"es":1053501.22,"sr":2.33,"gspb":332.92,"espb":326.26,"qs":73,"tier":"Middle","srpa":39.77,"srpp":43.33,"eppp":50.95,"qpp":33.81,"ed":810.7,"readm":15,"ip":263.2,"snf":50.9,"snfc":21957,"pcp":66.32,"ups":64.29,"ccg":64.92,"pcap":98.61,"pwi":8.33,"bep":33.33,"bea":33.33,"bag":79.17,"be1":false,"be2":true,"be3":true,"be4":true,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NY","cpx":78.25,"cause":"SNF/post-acute cost pressure"},{"id":"D0343","nm":"Prime Accountable Care East LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":3.15,"risk":0.97,"bene":9224,"bm":10993,"exp":109475207.28,"gs":-5533658.89,"es":-5533658.89,"sr":-5.46,"gspb":-599.92,"espb":-599.92,"qs":71,"tier":"Low","srpa":7.2,"srpp":8.1,"eppp":9.05,"qpp":28.57,"ed":451.8,"readm":15.8,"ip":251.4,"snf":30.7,"snfc":13612,"pcp":68.8,"ups":38.48,"ccg":54.92,"pcap":13.4,"pwi":50.89,"bep":88.89,"bea":88.89,"bag":30.11,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"TN","cpx":31.59,"cause":"Readmission pressure"},{"id":"D0346","nm":"Arizona Best Care Network LLC","tp":"Standard","pg":"Standard","cap":"PCC","dr":0.03,"dual":21.86,"risk":0.87,"bene":6161,"bm":9789,"exp":65849774.45,"gs":-4227242.33,"es":-4227242.33,"sr":-7.01,"gspb":-686.13,"espb":-686.13,"qs":54,"tier":"Low","srpa":4.17,"srpp":4.29,"eppp":6.19,"qpp":17.14,"ed":605.1,"readm":15.8,"ip":195.1,"snf":33,"snfc":14669,"pcp":63.86,"ups":43.81,"ccg":78.73,"pcap":46.34,"pwi":1.45,"bep":22.22,"bea":22.22,"bag":88.16,"be1":false,"be2":false,"be3":false,"be4":false,"be5":false,"be6":true,"be7":false,"be8":false,"be9":true,"be10":true,"be11":false,"be12":false,"be13":true,"st":"AZ","cpx":46.51,"cause":"Readmission pressure"},{"id":"D0347","nm":"'N HEALTH NETWORK PARTNERS, LLC","tp":"New Entrant","pg":"New Entrant","cap":"PCC","dr":0.03,"dual":12.88,"risk":1.08,"bene":1436,"bm":12733,"exp":17711598.01,"gs":191000.86,"es":187180.84,"sr":1.04,"gspb":133.01,"espb":130.35,"qs":74,"tier":"Middle","srpa":33.71,"srpp":42.31,"eppp":42.31,"qpp":34.62,"ed":636.9,"readm":15.2,"ip":273.7,"snf":65.8,"snfc":15919,"pcp":69.72,"ups":56.92,"ccg":46.15,"pcap":60,"pwi":42.95,"bep":55.56,"bea":55.56,"bag":50.74,"be1":true,"be2":true,"be3":true,"be4":false,"be5":true,"be6":false,"be7":false,"be8":false,"be9":false,"be10":false,"be11":false,"be12":false,"be13":false,"st":"NJ","cpx":24.36,"cause":"Acute admission pressure"},{"id":"D0348","nm":"Central Virginia Coalition of Healthcare Providers, LLC","tp":"Standard","pg":"Standard","cap":"TCC","dr":0.03,"dual":23.35,"risk":1.07,"bene":2711,"bm":12086,"exp":30684125.41,"gs":1756489.51,"es":1721359.72,"sr":5.36,"gspb":647.91,"espb":634.95,"qs":69,"tier":"Middle","srpa":62.5,"srpp":69.05,"eppp":69.05,"qpp":24.29,"ed":815.8,"readm":15.4,"ip":281.8,"snf":47.6,"snfc":14581,"pcp":63.26,"ups":66.86,"ccg":81.43,"pcap":85.33,"pwi":48.48,"bep":88.89,"bea":88.89,"bag":31.31,"be1":true,"be2":true,"be3":true,"be4":true,"be5":true,"be6":true,"be7":true,"be8":true,"be9":true,"be10":true,"be11":true,"be12":true,"be13":true,"st":"VA","cpx":67.46,"cause":"Acute admission pressure"}];
+
+const COL={id:'ACO ID',nm:'ACO Name',tp:'ACO Type',pg:'Peer Group',cap:'Capitation Type',dr:'Discount Rate (%)',dual:'Dual Eligible (%)',risk:'HCC Risk Score',bene:'Beneficiaries',bm:'Benchmark PMPY ($)',exp:'Total Expenditure',gs:'Gross Savings',es:'Earned Savings',sr:'Savings Rate (%)',gspb:'Gross Savings/Bene ($)',espb:'Earned Savings/Bene ($)',qs:'Quality Score',tier:'Performance Tier',srpa:'Savings Ptl (All)',srpp:'Savings Ptl (Peer)',eppp:'Earned Savings Ptl',qpp:'Quality Ptl',ed:'ED Visits/1,000',readm:'Readmission Rate (%)',ip:'IP Discharges/1,000',snf:'SNF Discharges/1,000',snfc:'SNF Cost/Episode ($)',pcp:'PCP Visit 30-Day (%)',ups:'Utilization Pressure',ccg:'Care Coord. Gap',pcap:'Provider Capitation (%)',pwi:'Waiver Intensity',bep:'BE % (PY23)',bea:'BE Adoption (%)',bag:'BE Activation Gap',st:'State',cpx:'Population Complexity',cause:'Primary Root Cause'};
+const BE_NAMES={be1:'Telehealth',be2:'SNF 3-Day Waiver',be3:'Post-Disch Home Visit',be4:'Care Mgmt Home Visit',be5:'Home Health Waiver',be6:'Cost Share Part B',be7:'Chronic Disease Reward',be8:'Concurrent Hospice',be9:'Cardiac/Pulm Rehab',be10:'Diabetic Shoes',be11:'Home Infusion',be12:'Hospice Care Cert',be13:'Medical Nutrition'};
+
+// ===== HELP DEFINITIONS (Updated v2) =====
+const HELP={
+data_columns:[
+{n:'ACO ID',d:'<strong>Definition:</strong> Unique identifier assigned by CMS. REACH ACOs use D-prefix (e.g., D0001).<br><strong>Calculation:</strong> Assigned by CMS upon program entry. Not derived from other data.'},
+{n:'ACO Name',d:'<strong>Definition:</strong> Official ACO legal or business name as reported in CMS PUF files.<br><strong>Calculation:</strong> Directly from CMS participation agreements.'},
+{n:'ACO Type',d:'<strong>Definition:</strong> REACH model classification based on population served and organizational experience. Three types: High Needs Population, Standard, New Entrant.<br><strong>Calculation:</strong> Determined by CMS based on beneficiary acuity mix, provider experience criteria, and ACO application.'},
+{n:'State',d:'<strong>Definition:</strong> Primary operating state where the ACO has the highest concentration of aligned beneficiaries.<br><strong>Calculation:</strong> Derived from aligned beneficiary geographic distribution in REACH Aligned Beneficiaries PUF (R3).'},
+{n:'Capitation Type',d:'<strong>Definition:</strong> Payment mechanism governing how the ACO pays its participating providers. PCC = Primary Care Capitation, TCC = Total Cost of Care Capitation.<br><strong>Calculation:</strong> PCC: capitated payments cover primary care only (~7-15% of benchmark). TCC: capitated payments cover nearly all Medicare services (~80-100% of benchmark).'},
+{n:'Discount Rate (%)',d:'<strong>Definition:</strong> CMS\'s guaranteed savings threshold deducted before shared savings are calculated. Under the Global option.<br><strong>Calculation:</strong> 0% for Professional option; 3.0% for Global option (PY2023-24), rising to 3.5% (PY2025-26). Applied as: Earned Savings = Gross Savings − (Benchmark × Discount Rate).'},
+{n:'Dual Eligible (%)',d:'<strong>Definition:</strong> Percentage of aligned beneficiaries eligible for both Medicare and Medicaid, indicating socioeconomic complexity.<br><strong>Calculation:</strong> (Number of dual-eligible beneficiaries / Total aligned beneficiaries) × 100. Source: CMS beneficiary enrollment files via REACH Results PUF (S4).'},
+{n:'HCC Risk Score',d:'<strong>Definition:</strong> CMS Hierarchical Condition Categories risk adjustment score measuring expected medical cost burden.<br><strong>Calculation:</strong> Standard/New Entrant: Prospective CMS-HCC model (prior-year diagnoses). High Needs: CMMI-HCC Concurrent model (current-year). 1.0 = average Medicare FFS beneficiary expected cost.'},
+{n:'Beneficiaries',d:'<strong>Definition:</strong> Total number of Medicare beneficiaries aligned (assigned) to the ACO for the performance year.<br><strong>Calculation:</strong> Count of unique beneficiaries meeting CMS alignment criteria (claims-based attribution to ACO providers). Source: REACH Results PUF (S4).'},
+{n:'Benchmark PMPY ($)',d:'<strong>Definition:</strong> Per Member Per Year benchmark — the amount CMS expects to spend on each beneficiary annually. This is the "budget" against which ACO performance is measured.<br><strong>Calculation:</strong> Total benchmark expenditure / Number of aligned beneficiaries. CMS calculates the total benchmark using regional FFS spending, risk adjustment, and trend factors.'},
+{n:'Savings Rate (%)',d:'<strong>Definition:</strong> Primary profitability metric showing how much the ACO saved (or lost) relative to its CMS benchmark.<br><strong>Calculation:</strong> (Benchmark − Actual Expenditure) / Benchmark × 100. Positive = savings (under budget). Negative = loss (over budget).'},
+{n:'Earned Savings/Bene ($)',d:'<strong>Definition:</strong> Final per-beneficiary profit (or loss) after CMS quality adjustments and discount rate deductions.<br><strong>Calculation:</strong> Earned Shared Savings (or Losses) / Number of aligned beneficiaries. Earned savings = gross savings minus discount rate, multiplied by quality-adjusted sharing rate.'},
+{n:'Gross Savings/Bene ($)',d:'<strong>Definition:</strong> Per-beneficiary savings before any quality adjustments or discount rate deductions. Raw efficiency signal.<br><strong>Calculation:</strong> (Benchmark − Actual Expenditure) / Number of beneficiaries.'},
+{n:'Quality Score',d:'<strong>Definition:</strong> CMS pay-for-performance composite (0-100%) measuring care delivery quality across preventive, chronic, experience, and safety domains.<br><strong>Calculation:</strong> Reported via CMS Web Interface or eCQM. Includes: preventive care (immunization, screening), chronic disease management (HbA1c, BP control), patient experience (CAHPS), patient safety. Determines 2% quality withhold earn-back.'},
+{n:'Performance Tier',d:'<strong>Definition:</strong> Relative performance classification within peer group (High, Middle, Low).<br><strong>Calculation:</strong> Composite = (Savings Rate Percentile + Earned PMPY Percentile) / 2, within peer group. Top ~1/3 = High, Middle ~1/3 = Middle, Bottom ~1/3 = Low. Quality percentile used as tiebreaker at boundary zones.'},
+{n:'ED Visits/1,000',d:'<strong>Definition:</strong> Emergency department visits per 1,000 aligned beneficiaries. Measures acute care access and primary care effectiveness.<br><strong>Calculation:</strong> (Number of ED visits by ACO beneficiaries in PY) / (Total aligned beneficiaries / 1,000). Source: Part A and Part B claims.'},
+{n:'Readmission Rate (%)',d:'<strong>Definition:</strong> 30-day all-cause unplanned hospital readmission rate. Key quality and efficiency metric.<br><strong>Calculation:</strong> (Unplanned readmissions within 30 days of discharge / Total eligible index discharges) × 100. Planned readmissions excluded per CMS HRRP methodology.'},
+{n:'IP Discharges/1,000',d:'<strong>Definition:</strong> Inpatient hospital discharges per 1,000 aligned beneficiaries. Measures acute care utilization intensity.<br><strong>Calculation:</strong> (Number of inpatient discharges) / (Total aligned beneficiaries / 1,000). Source: Part A claims.'},
+{n:'SNF Discharges/1,000',d:'<strong>Definition:</strong> Skilled Nursing Facility discharges per 1,000 aligned beneficiaries. Measures post-acute care utilization.<br><strong>Calculation:</strong> (Number of SNF admissions by ACO beneficiaries) / (Total aligned beneficiaries / 1,000). Source: Part A claims.'},
+{n:'SNF Cost/Episode ($)',d:'<strong>Definition:</strong> Average Medicare spending per SNF episode. Reflects post-acute care cost intensity.<br><strong>Calculation:</strong> Total SNF spending / Number of SNF episodes. Source: Part A claims.'},
+{n:'PCP Visit 30-Day (%)',d:'<strong>Definition:</strong> Percentage of beneficiaries seeing a primary care provider within 30 days of hospital discharge. Measures care continuity.<br><strong>Calculation:</strong> (Beneficiaries with PCP visit ≤30 days post-discharge / Total discharges with 30-day follow-up window) × 100.'},
+{n:'Utilization Pressure',d:'<strong>Definition:</strong> Composite analytical score (0-100) measuring aggregate utilization intensity relative to peers.<br><strong>Calculation:</strong> Average of 5 peer-percentile sub-scores: ED visit rate, readmission rate, acute admission rate, post-acute discharge volume, post-acute cost. Each sub-score 0-100 within peer group.'},
+{n:'Care Coord. Gap',d:'<strong>Definition:</strong> Composite score measuring gaps in care coordination relative to peers.<br><strong>Calculation:</strong> Average of readmission pressure percentile, ED pressure percentile, and PCP follow-up gap percentile within peer group. Higher = more room for improvement.'},
+{n:'Provider Capitation (%)',d:'<strong>Definition:</strong> Percentage of total provider payments made via capitation (fixed PMPM) vs fee-for-service.<br><strong>Calculation:</strong> (Total capitated payments to providers / Total payments to all providers) × 100. PCC ACOs typically 7-15%, TCC ACOs 80-100%.'},
+{n:'Waiver Intensity',d:'<strong>Definition:</strong> Composite score reflecting how intensively the ACO uses CMS waiver authorities.<br><strong>Calculation:</strong> Derived from provider-level waiver election rates (SNF 3-day waiver, post-acute waivers, chronic access waivers, telehealth) across all participating providers.'},
+{n:'BE Adoption (%)',d:'<strong>Definition:</strong> Benefit Enhancement adoption rate — how many of the available CMS waivers the ACO has elected.<br><strong>Calculation:</strong> (Number of elected BEs / Total available BEs) × 100. PY2023: 9 items available. PY2024+: 13 items.'},
+{n:'BE Activation Gap',d:'<strong>Definition:</strong> Gap between available benefit flexibilities and actual activation level.<br><strong>Calculation:</strong> 100 − Average(org_be_pct, provider_waiver_intensity_score). Higher gap = more untapped benefit enhancement potential.'},
+{n:'Population Complexity',d:'<strong>Definition:</strong> Composite score reflecting the overall complexity of the ACO\'s patient population.<br><strong>Calculation:</strong> Derived from dual-eligible percentage, risk score distribution, ESRD prevalence, and geographic dispersion. Higher = more complex population.'},
+{n:'Primary Root Cause',d:'<strong>Definition:</strong> Analytical classification of the primary driver of the ACO\'s performance (positive or negative).<br><strong>Calculation:</strong> Determined by multi-factor analysis of utilization patterns, cost drivers, provider configuration, and population characteristics relative to peer group benchmarks.'},
+{n:'Savings Ptl (All)',d:'<strong>Definition:</strong> Savings rate percentile rank among all 132 REACH ACOs.<br><strong>Calculation:</strong> Rank position of this ACO\'s savings rate among all REACH ACOs, expressed as a 0-100 percentile.'},
+{n:'Savings Ptl (Peer)',d:'<strong>Definition:</strong> Savings rate percentile rank within the ACO\'s peer group (High Needs, Standard, or New Entrant).<br><strong>Calculation:</strong> Rank position within peer group, expressed as 0-100 percentile.'},
+{n:'Earned Savings Ptl',d:'<strong>Definition:</strong> Earned savings per beneficiary percentile rank within peer group.<br><strong>Calculation:</strong> Rank of earned_savings_per_beneficiary within peer group, expressed as 0-100 percentile.'},
+{n:'Quality Ptl',d:'<strong>Definition:</strong> Quality score percentile rank within peer group.<br><strong>Calculation:</strong> Rank of quality_score within peer group, expressed as 0-100 percentile.'}
+],
+types:[
+{n:'High Needs Population ACO',d:'ACOs managing beneficiaries with complex medical needs (multiple chronic conditions, dual-eligible for Medicare+Medicaid). Uses integrated care similar to PACE programs. Lower minimum beneficiary threshold.'},
+{n:'Standard ACO',d:'For experienced organizations with prior Medicare value-based care experience (MSSP, NGACO, Pioneer). Requires minimum 5,000 aligned beneficiaries.'},
+{n:'New Entrant ACO',d:'For organizations entering Medicare risk-based models for the first time. Over 50% of providers must lack prior MSSP/NGACO experience. Beneficiary thresholds increase over time.'}
+],
+comparison:[
+{n:'Dual %',d:'Percentage of beneficiaries eligible for both Medicare and Medicaid. Higher dual percentage indicates a more socially complex, lower-income population that typically requires more care coordination and social services.'},
+{n:'Risk Score',d:'CMS-HCC score measuring expected medical costs. 1.0 = average Medicare beneficiary. A score of 4.0 means expected costs are 4x average. High Needs ACOs use concurrent risk adjustment (based on current-year diagnoses), while others use prospective (prior-year).'},
+{n:'Benchmark PMPY',d:'Per Member Per Year benchmark — the amount CMS expects to spend on each beneficiary annually. This is the "budget" against which ACO performance is measured. Higher benchmarks reflect sicker populations.'},
+{n:'Savings Rate',d:'(Benchmark - Actual Expenditure) / Benchmark × 100. Positive = ACO spent less than expected (savings). Negative = ACO spent more (loss). This is the primary profitability metric.'},
+{n:'Quality Score',d:'CMS pay-for-performance score (0-100%). Measures patient experience, preventive care, chronic disease management, and patient safety. Determines how much of the 2% quality withhold the ACO earns back.'},
+{n:'Earned / Bene',d:'Earned shared savings divided by number of beneficiaries. Represents the per-person profit (or loss) the ACO achieved after CMS quality adjustments and discount rate deductions.'},
+{n:'Savings Achievement',d:'Number of ACOs that achieved positive earned savings out of total ACOs in that type. Indicates the success rate of the ACO type overall.'}
+],
+financial:[
+{n:'Total Benchmark',d:'Sum of all individual beneficiary benchmarks for all ACOs in this type. Represents the total expected Medicare spending CMS budgeted.'},
+{n:'Total Expenditure',d:'Actual total Medicare spending on all beneficiaries in these ACOs.'},
+{n:'Gross Savings',d:'Benchmark minus Expenditure, before any quality adjustments or discount rate deductions. Raw savings before CMS takes its share.'},
+{n:'Earned Savings',d:'The final amount the ACO keeps after: (1) applying the discount rate (CMS keeps first 2-3.5%), (2) adjusting for quality score performance. This is the actual payout.'},
+{n:'Aggregate Savings Rate',d:'Total gross savings / Total benchmark across all ACOs of this type. Weighted by each ACO\'s benchmark size — different from simple average of individual rates.'}
+],
+savings:[
+{n:'Savings Rate',d:'(Benchmark - Actual Spending) / Benchmark × 100. The histogram groups ACOs into 6 ranges from deep losses (< -5%) to strong savings (> 15%).'},
+{n:'Loss Territory',d:'ACOs with negative savings rates — they spent more than CMS benchmarked. Under REACH\'s two-sided risk model, these ACOs must pay CMS back (shared losses).'}
+],
+scatter:[
+{n:'Savings Rate (X-axis)',d:'The percentage by which the ACO\'s actual spending came under (positive) or over (negative) its CMS benchmark. Higher = more efficient.'},
+{n:'Earned Savings Per Beneficiary (Y-axis)',d:'Dollar amount earned (or lost) per beneficiary after quality adjustments and discount rates. Combines both efficiency and scale.'},
+{n:'Interpretation',d:'Points in the upper-right quadrant are the most profitable ACOs (high savings rate + high per-bene earnings). Lower-left are struggling ACOs. Use the zoom and filter controls to explore specific ACO types or regions of the chart.'}
+],
+tier:[
+{n:'Performance Tier',d:'CMS categorization of ACO performance within its peer group (High Needs, Standard, or New Entrant). Based on a composite of savings rate percentile and earned PMPY percentile, with quality as a tiebreaker.'},
+{n:'Tier Calculation',d:'<strong>Composite Score</strong> = (Savings Rate Percentile + Earned PMPY Percentile) / 2, calculated within each peer group. Quality Percentile is used as a tiebreaker for ACOs at boundary zones.'},
+{n:'High Tier',d:'Composite Score in the top ~1/3 of peer group. <strong>Standard ACO:</strong> Composite ≥ ~69. <strong>High Needs:</strong> ≥ ~64. These ACOs demonstrate strong cost management, significantly beating CMS benchmarks and earning substantial shared savings. Most recover the full 2% quality withhold.'},
+{n:'Middle Tier',d:'Composite Score in the middle ~1/3. <strong>Standard:</strong> ~30–69. <strong>High Needs:</strong> ~32–64. These ACOs achieve moderate positive savings, typically in the 2-10% savings rate range. They are operationally stable but have room for improvement in care coordination or cost control.'},
+{n:'Low Tier',d:'Composite Score in the bottom ~1/3. <strong>Standard:</strong> ≤ ~29. <strong>High Needs:</strong> ≤ ~32. Includes most loss ACOs (negative savings). These organizations are spending at or above CMS benchmarks and may face financial pressure under two-sided risk.'},
+{n:'Boundary Zone',d:'ACOs with Composite Scores near the tier cutpoints (~30, ~69) may shift between adjacent tiers based on their Quality Percentile. Example: a Standard ACO with Composite 69 and high Quality Percentile → High tier; same Composite but low Quality → Middle tier.'},
+{n:'Practical Significance',d:'Tiers are not a direct CMS payment differentiator, but they indicate relative position within the program. Useful for organizational benchmarking, board reporting, and strategic planning. Low-tier ACOs should evaluate whether to restructure care models, renegotiate provider contracts, or reconsider participation.'},
+{n:'Quality Withhold',d:'CMS withholds 2% of benchmark spending. ACOs earn it back proportional to their quality score. A score of 90% earns back 90% of the withhold. Low-tier ACOs with poor quality face a double penalty: losses on spending plus forfeited withhold.'}
+],
+correlation:[
+{n:'Pearson Correlation (r)',d:'Measures linear relationship strength between two variables, from -1 (perfect negative) to +1 (perfect positive). Values near 0 mean no linear relationship. Calculated for Standard ACOs only (n=105) to control for the vastly different benchmarks of High Needs ACOs.'},
+{n:'Risk Score (r = +0.41)',d:'<strong>CMS Definition:</strong> CMS-HCC (Hierarchical Condition Categories) risk adjustment score. The standard Medicare risk adjustment model used for payment normalization.<br><br><strong>Calculation:</strong> Standard/New Entrant use Prospective CMS-HCC (based on prior-year diagnoses). High Needs use CMMI-HCC Concurrent (current-year). Normalized so 1.0 = average Medicare FFS beneficiary.<br><br><strong>Chart Meaning:</strong> Strongest positive driver (moderate-strong correlation). Higher-acuity populations receive higher benchmarks from CMS, creating more room between expected and actual costs. ACOs managing sicker patients can achieve larger absolute savings even with similar care quality. This suggests that serving complex populations — when done well — is the most reliable path to profitability.'},
+{n:'Quality Score (r = +0.23)',d:'<strong>CMS Definition:</strong> ACO Quality Performance Standard per 42 CFR § 425.512. A pay-for-performance composite measuring care delivery quality.<br><br><strong>Calculation:</strong> Reported via CMS Web Interface, eCQM, or MIPS. Measures include: preventive care (immunization rates, cancer screening), chronic disease management (diabetes HbA1c control, hypertension), patient experience (CAHPS survey), and patient safety. Scored 0-100%.<br><br><strong>Chart Meaning:</strong> Weak-to-moderate positive correlation. Higher quality scores associate with better savings — but this likely reflects overall organizational competence (good management drives both quality and efficiency) rather than a direct causal link. Quality also affects the 2% withhold earn-back, creating a small direct financial incentive.'},
+{n:'Discount Rate (r = +0.19)',d:'<strong>CMS Definition:</strong> REACH Model Global Option discount rate per the CMS Innovation Center participation agreement. CMS\'s guaranteed savings threshold before sharing begins.<br><br><strong>Calculation:</strong> 0% for Professional option; 3.0% for Global option (PY2023-24), rising to 3.5% (PY2025-26). Applied to total benchmark before savings calculations.<br><br><strong>Chart Meaning:</strong> Weak positive correlation. ACOs choosing the 3% Global option (higher risk, higher reward) outperform those at 0% Professional option. This reflects self-selection bias: organizations confident in their care management choose Global, and that confidence correlates with actual ability. Not a causal driver — switching to Global won\'t improve performance.'},
+{n:'Capitation % (r = +0.16)',d:'<strong>CMS Definition:</strong> Percentage of total provider payments made via capitation (fixed per-member-per-month) vs fee-for-service. Reported in REACH participation agreements.<br><br><strong>Calculation:</strong> (Total capitated payments to providers / Total payments to all providers) × 100. PCC ACOs typically capitate primary care only (~7-15%), TCC ACOs capitate most services (~80-100%).<br><br><strong>Chart Meaning:</strong> Weak positive correlation. Higher capitation aligns provider incentives with cost control — capitated providers have no incentive to over-utilize services. However, the effect is small, suggesting that incentive alignment alone is insufficient without strong care coordination infrastructure.'},
+{n:'ED Visits/1000 (r = -0.04)',d:'<strong>CMS Definition:</strong> Emergency department visits per 1,000 aligned beneficiaries. CMS claims-based utilization measure from Part A and Part B claims.<br><br><strong>Calculation:</strong> (Number of ED visits by ACO beneficiaries in the performance year) / (Total aligned beneficiaries / 1,000). Includes all ED visits regardless of whether they result in admission.<br><br><strong>Chart Meaning:</strong> Essentially no correlation. ED visit volume alone does not predict savings performance. This is because CMS benchmarks already account for regional utilization patterns, and ED visits represent a relatively small share of total Medicare spending compared to inpatient and post-acute care.'},
+{n:'Readmission Rate (r = -0.03)',d:'<strong>CMS Definition:</strong> 30-day all-cause unplanned hospital readmission rate. Aligned with the Hospital Readmissions Reduction Program (HRRP) methodology.<br><br><strong>Calculation:</strong> (Unplanned readmissions within 30 days of discharge / Total eligible index discharges) × 100. Planned readmissions (e.g., scheduled chemotherapy) are excluded per CMS algorithms.<br><br><strong>Chart Meaning:</strong> Essentially no correlation. Readmission rates have minimal direct relationship to overall savings rates for Standard ACOs. This may be because readmission reduction efforts have diminishing returns, and CMS benchmarks partially account for historical readmission patterns in each market.'},
+{n:'SNF Discharges (r = -0.07)',d:'<strong>CMS Definition:</strong> Skilled Nursing Facility discharges per 1,000 aligned beneficiaries. Measures post-acute care utilization intensity.<br><br><strong>Calculation:</strong> (Number of SNF admissions by ACO beneficiaries) / (Total aligned beneficiaries / 1,000). Includes all Medicare-covered SNF stays.<br><br><strong>Chart Meaning:</strong> Very weak negative correlation. Higher SNF utilization slightly hurts savings, as post-acute care is expensive. However, the effect is small because (1) SNF use varies widely by patient acuity, and (2) some SNF utilization is cost-effective when it prevents hospital readmission. ACOs with the SNF 3-Day Waiver benefit enhancement can manage SNF utilization more flexibly.'},
+{n:'Utilization Pressure (r = -0.13)',d:'<strong>CMS Definition:</strong> Not a CMS-defined metric — it is a composite analytical score constructed for this analysis.<br><br><strong>Calculation:</strong> Average of 5 peer-percentile sub-scores: (1) ED visit rate percentile, (2) Readmission rate percentile, (3) Acute admission rate percentile, (4) Post-acute discharge volume percentile, (5) Post-acute cost percentile. Each sub-score ranges 0-100 within the peer group. Final score = simple mean of all 5.<br><br><strong>Chart Meaning:</strong> Weak negative correlation. ACOs facing more utilization pressure relative to peers tend to generate lower savings. This metric captures the aggregate intensity of service utilization — high-pressure ACOs are using more healthcare resources across multiple dimensions, making it harder to stay under benchmark.'},
+{n:'BE Adoption (r = -0.17)',d:'<strong>CMS Definition:</strong> Not a CMS-defined metric — constructed from benefit enhancement election data reported in REACH participation agreements.<br><br><strong>Calculation:</strong> (Number of elected benefit enhancements / Total available BEs) × 100. PY2023: 9 available items. PY2024+: 13 items. Based on organization-level election status (Yes/No per item).<br><br><strong>Chart Meaning:</strong> Weak negative correlation — counterintuitive. Higher BE adoption associates with slightly worse savings. This is likely a <strong>remediation effect</strong>: struggling ACOs adopt more BEs as corrective strategy (e.g., telehealth to improve access, SNF waiver to control post-acute costs). The BEs themselves may be beneficial, but the ACOs adopting them most aggressively are starting from a weaker position.'},
+{n:'Dual % (r = -0.20)',d:'<strong>CMS Definition:</strong> Percentage of aligned beneficiaries eligible for both Medicare and Medicaid (full-benefit or partial dual eligibles). From CMS beneficiary enrollment files.<br><br><strong>Calculation:</strong> (Number of dual-eligible beneficiaries / Total aligned beneficiaries) × 100. Includes both full-dual (Medicaid covers premiums, deductibles, copays) and partial-dual (limited Medicaid benefits).<br><br><strong>Chart Meaning:</strong> Strongest negative driver. Higher dual-eligible populations have greater social complexity — poverty, housing instability, food insecurity, transportation barriers — that drives healthcare utilization beyond what CMS risk adjustment and benchmarks can offset. These social determinants create costs that medical interventions alone cannot fully address, making it structurally harder for high-dual ACOs to achieve savings.'}
+],
+loss:[
+{n:'Loss ACO',d:'An ACO whose actual expenditure exceeded its CMS benchmark, resulting in negative savings. Under REACH\'s two-sided risk model, these ACOs must pay CMS back (shared losses).'},
+{n:'Geographic Concentration',d:'Loss ACOs cluster in certain states — California (7 Standard losses) and Arizona (4 Standard losses) are notable. This may reflect regional cost pressures, competitive markets, or benchmark methodology issues.'}
+],
+utilization:[
+{n:'ED Visits per 1,000',d:'Emergency department visits per 1,000 beneficiaries annually. Higher rates suggest gaps in primary care access or care coordination. High Needs ACOs have ~2.6x higher ED rates (1,590 vs 610) due to patient complexity.'},
+{n:'Readmission Rate %',d:'Percentage of hospital discharges followed by another admission within 30 days. A key quality/efficiency metric — lower is better. National Medicare average is ~15-16%.'},
+{n:'IP Discharges per 1,000',d:'Inpatient hospital discharges per 1,000 beneficiaries. Measures acute care utilization intensity.'},
+{n:'SNF Discharges per 1,000',d:'Skilled Nursing Facility discharges per 1,000 beneficiaries. High Needs ACOs have dramatically higher SNF use (323 vs 50) reflecting their complex patient population.'},
+{n:'PCP Visit % (30-Day)',d:'Percentage of beneficiaries with a primary care visit within 30 days of hospital discharge. Higher is better — indicates care continuity. Not available for High Needs ACOs.'},
+{n:'Utilization Pressure Score',d:'Composite 0-100 score averaging 5 peer-percentile sub-scores: ED visits, readmissions, acute admissions, post-acute volume, and post-acute cost. Higher = more utilization pressure relative to peers.'},
+{n:'Care Coordination Gap',d:'Composite score averaging readmission pressure, ED pressure, and PCP follow-up gap percentiles. Higher = more room for improvement in care coordination.'}
+],
+efficiency:[
+{n:'Benchmark PMPY ($K)',d:'Per Member Per Year benchmark in thousands. Shows the spending "budget" CMS assigned per beneficiary.'},
+{n:'SNF $/Episode ($K)',d:'Average spending per Skilled Nursing Facility episode in thousands. Reflects post-acute care cost intensity.'}
+],
+capitation:[
+{n:'PCC (Primary Care Capitation)',d:'ACO receives a fixed monthly payment covering primary care services only (~7% of total benchmark). The ACO manages primary care costs but other services remain fee-for-service. Lower risk, less control.'},
+{n:'TCC (Total Cost of Care)',d:'ACO receives capitated payments covering nearly all Medicare services (~100% of benchmark). Full financial risk and full control over care delivery. Requires stronger infrastructure and data capabilities.'},
+{n:'Discount Rate',d:'Under the Global option, CMS deducts a percentage from savings before sharing: 3.0% in PY2023-24, increasing to 3.5% in PY2025-26. Professional option has 0% discount but lower sharing rates.'}
+],
+be_adoption:[
+{n:'Benefit Enhancement (BE)',d:'CMS Section 1115A waivers that allow REACH ACOs to offer services beyond standard Medicare coverage. 9 items available in PY2023, expanded to 13 from PY2024.'},
+{n:'BE Adoption Score',d:'(Number of "Yes" BEs / Total available BEs) × 100. PY2023: out of 9 items.'},
+{n:'Benefit Activation Gap',d:'100 minus the average of org_be_pct and provider_waiver_intensity_score. Higher gap = more room to activate available benefit flexibilities.'},
+{n:'Telehealth',d:'Expanded telehealth without geographic or originating-site restrictions.'},
+{n:'SNF 3-Day Waiver',d:'Waives the 3-day inpatient hospital stay requirement before Medicare covers SNF care.'},
+{n:'Post-Discharge Home Visit',d:'Home visit within days of hospital discharge for medication adherence and recovery check.'},
+{n:'Care Management Home Visit',d:'Ongoing home visits for chronic disease management and medication reconciliation.'},
+{n:'Home Health Homebound Waiver',d:'Waives the "homebound" requirement for home health services.'},
+{n:'Cost Sharing Part B',d:'Allows ACOs to reduce or waive Part B copays for high-value services.'},
+{n:'Chronic Disease Reward',d:'Financial rewards for beneficiaries engaging in chronic disease management programs.'},
+{n:'Concurrent Hospice',d:'Allows hospice care AND curative treatment simultaneously.'},
+{n:'Cardiac/Pulmonary Rehab',d:'Expanded access to cardiac and pulmonary rehabilitation programs.'},
+{n:'Diabetic Shoes',d:'Coverage for therapeutic shoes/inserts for diabetic patients.'},
+{n:'Home Infusion Therapy',d:'IV medication administration at home instead of clinic/hospital.'},
+{n:'Hospice Care Certification',d:'Streamlined hospice eligibility certification.'},
+{n:'Medical Nutrition Therapy',d:'Expanded nutritional counseling for chronic conditions.'}
+]
+};
+
+const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+const txt=isDark?'rgba(255,255,255,0.7)':'rgba(0,0,0,0.55)';
+const grd=isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
+const HN='#E24B4A',ST='#378ADD',NE_='#BA7517';
+const charts={};
+
+// ===== TAB SWITCHING =====
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})},50);
+  });
+});
+
+// ===== HELP → SIDEBAR =====
+function openHelp(key){
+  const terms=HELP[key];if(!terms)return;
+  const titles={data_columns:'Data List — Column Definitions',types:'ACO Type Definitions',comparison:'Metric Definitions',financial:'Financial Metrics',savings:'Savings Rate Terms',scatter:'Scatter Plot Guide',tier:'Performance Tier Methodology',correlation:'Profitability Drivers — Detailed Definitions',loss:'Loss ACO Definitions',utilization:'Utilization Metrics',efficiency:'Efficiency Metrics',capitation:'Capitation & Payment Models',be_adoption:'Benefit Enhancement Terms'};
+  document.getElementById('spIcon').innerHTML='&#x2753;';
+  document.getElementById('spTitle').textContent=titles[key]||'Definitions';
+  document.getElementById('spFilter').innerHTML='<span style="font-size:11px;color:var(--t3)">Click any ? button on a different section to switch definitions</span>';
+  let h='';
+  terms.forEach(t=>{h+='<div class="term"><p class="tname">'+t.n+'</p><p class="tdesc">'+t.d+'</p></div>'});
+  document.getElementById('spBody').innerHTML=h;
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.classList.add('panel-open');
+  setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})},300);
+}
+document.querySelectorAll('.help-btn').forEach(b=>b.addEventListener('click',()=>openHelp(b.dataset.help)));
+
+// ===== SIDE PANEL RESIZE =====
+(function(){
+  const panel=document.getElementById('sidePanel');
+  const handle=document.getElementById('spResize');
+  let startX,startW;
+  handle.addEventListener('mousedown',e=>{
+    e.preventDefault();startX=e.clientX;startW=panel.offsetWidth;
+    handle.classList.add('active');
+    const onMove=ev=>{
+      let nw=startW+(startX-ev.clientX);
+      nw=Math.max(300,Math.min(nw,window.innerWidth*0.7));
+      document.documentElement.style.setProperty('--sp-width',nw+'px');
+    };
+    const onUp=()=>{handle.classList.remove('active');document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp)};
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
+  handle.addEventListener('dblclick',()=>{document.documentElement.style.setProperty('--sp-width','400px')});
+})();
+
+// ===== MULTI-COLUMN SORT =====
+let panelSortKeys=[];// [{col,dir}]  dir: 'desc'|'asc'
+let panelData=[];let panelColumns=[];
+
+function multiSort(data){
+  if(!panelSortKeys.length)return [...data];
+  return [...data].sort((a,b)=>{
+    for(const{col,dir}of panelSortKeys){
+      let av=a[col],bv=b[col];
+      if(av==null&&bv==null)continue;
+      if(av==null)return dir==='asc'?1:-1;
+      if(bv==null)return dir==='asc'?-1:1;
+      let cmp=0;
+      if(typeof av==='string'&&typeof bv==='string')cmp=av.localeCompare(bv);
+      else if(typeof av==='boolean')cmp=(av===bv?0:(av?-1:1));
+      else cmp=av-bv;
+      if(cmp!==0)return dir==='asc'?cmp:-cmp;
+    }
+    return 0;
+  });
+}
+
+function closePanel(){
+  document.getElementById('sidePanel').classList.remove('open');
+  document.body.classList.remove('panel-open');
+  setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})},300);
+}
+
+function openPanel(mode,val,extraCols){
+  let filtered=[];let title='';let filterText='';
+  const baseCols=['nm','tp','sr','espb','qs','st'];
+  panelColumns=extraCols?[...new Set([...baseCols,...extraCols])]:baseCols;
+
+  if(mode==='type'){
+    filtered=D.filter(r=>r.tp===val);title=val+' ACOs';filterText='Type: <span class="badge">'+val+'</span> ('+filtered.length+')';
+  }else if(mode==='loss'){
+    filtered=D.filter(r=>r.tp===val&&r.sr<0);title=val+' Loss ACOs';filterText='<span class="badge">'+val+'</span> Loss only ('+filtered.length+')';
+  }else if(mode==='tier'){
+    const[type,tier]=val.split('|');filtered=D.filter(r=>r.tp===type&&r.tier===tier);
+    title=type+' — '+tier+' Tier';filterText='<span class="badge">'+type+'</span> <span class="badge">'+tier+'</span> ('+filtered.length+')';
+    panelColumns=[...baseCols,'tier','srpp','eppp'];
+  }else if(mode==='dist'){
+    const[lo,hi,type]=val.split('|');filtered=D.filter(r=>{const m=type==='all'||r.tp===type;return m&&r.sr>=parseFloat(lo)&&r.sr<parseFloat(hi)});
+    title='SR '+lo+'%~'+hi+'%';filterText='<span class="badge">'+lo+'%~'+hi+'%</span>'+(type!=='all'?' <span class="badge">'+type+'</span>':'')+' ('+filtered.length+')';
+  }else if(mode==='cap'){
+    const[t,c]=val.split('|');filtered=D.filter(r=>r.tp===t&&r.cap===c);
+    title=t+' '+c;filterText='<span class="badge">'+t+'</span> <span class="badge">'+c+'</span> ('+filtered.length+')';panelColumns=[...baseCols,'cap','pcap'];
+  }else if(mode==='single'){showDetail(D.find(r=>r.id===val));return;
+  }else if(mode==='corr'){
+    filtered=[...D.filter(r=>r.tp==='Standard')].sort((a,b)=>(b[val]||0)-(a[val]||0));
+    title='Standard by '+COL[val];filterText='Sorted by <span class="badge">'+COL[val]+'</span> ('+filtered.length+')';panelColumns=[...baseCols,val];
+  }else{filtered=D;title='All ACOs';filterText='All ('+filtered.length+')';}
+
+  panelData=filtered;panelSortKeys=[{col:'sr',dir:'desc'}];
+  document.getElementById('spIcon').innerHTML='&#x1F4CA;';
+  document.getElementById('spTitle').textContent=title;
+  renderPanelFilter(filterText);
+  renderTable();
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.classList.add('panel-open');
+  setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})},300);
+}
+
+function renderPanelFilter(baseHtml){
+  let h='<span>'+baseHtml+'</span>';
+  if(panelSortKeys.length)h+='<button class="sort-reset" id="sortResetBtn">Reset sort</button>';
+  const el=document.getElementById('spFilter');
+  el.innerHTML=h;
+  el.dataset.base=baseHtml;
+  const rb=document.getElementById('sortResetBtn');
+  if(rb)rb.addEventListener('click',()=>{panelSortKeys=[];renderPanelFilter(baseHtml);renderTable()});
+}
+
+function renderTable(){
+  const cols=panelColumns;
+  const sorted=multiSort(panelData);
+  let h='<table class="sp-table"><thead><tr>';
+  cols.forEach(c=>{
+    const idx=panelSortKeys.findIndex(s=>s.col===c);
+    let ind='';
+    if(idx>=0){
+      const s=panelSortKeys[idx];
+      const num=panelSortKeys.length>1?(idx+1):'';
+      ind='<span class="sort-ind">'+num+(s.dir==='desc'?'▼':'▲')+'</span>';
+    }
+    h+='<th data-col="'+c+'">'+(COL[c]||c)+ind+'</th>';
+  });
+  h+='</tr></thead><tbody>';
+  sorted.forEach(r=>{
+    h+='<tr onclick="showDetail(D.find(x=>x.id===\''+r.id+'\'))">';
+    cols.forEach(c=>{
+      let v=r[c];
+      if(v==null){h+='<td>—</td>';return}
+      if(c==='nm'){h+='<td class="nm-cell">'+v+'</td>';return}
+      if(c==='sr'){h+='<td style="color:'+(v>=0?'var(--green)':'var(--red)')+'">'+v.toFixed(1)+'%</td>';return}
+      if(c==='espb'||c==='gspb'||c==='bm'||c==='snfc'){h+='<td>$'+Math.round(v).toLocaleString()+'</td>';return}
+      if(typeof v==='boolean'){h+='<td>'+(v?'Yes':'No')+'</td>';return}
+      if(typeof v==='number'){h+='<td>'+(Number.isInteger(v)?v:v.toFixed(1))+'</td>';return}
+      h+='<td>'+v+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('spBody').innerHTML=h;
+  // Sort handlers with shift support
+  document.querySelectorAll('.sp-table th').forEach(th=>{
+    th.addEventListener('click',e=>{
+      const col=th.dataset.col;
+      const idx=panelSortKeys.findIndex(s=>s.col===col);
+      if(e.shiftKey){
+        // Multi-sort: add/cycle/remove this column
+        if(idx>=0){
+          if(panelSortKeys[idx].dir==='desc')panelSortKeys[idx].dir='asc';
+          else panelSortKeys.splice(idx,1);// 3rd click: remove
+        }else{panelSortKeys.push({col,dir:'desc'})}
+      }else{
+        // Single-sort: cycle or set
+        if(idx>=0&&panelSortKeys.length===1){
+          if(panelSortKeys[0].dir==='desc')panelSortKeys[0].dir='asc';
+          else panelSortKeys=[];// 3rd click: remove
+        }else{panelSortKeys=[{col,dir:'desc'}]}
+      }
+      const base=document.getElementById('spFilter').dataset.base||'';
+      renderPanelFilter(base);
+      renderTable();
+    });
+  });
+}
+
+function showDetail(r){
+  if(!r)return;
+  const beKeys=['be1','be2','be3','be4','be5','be6','be7','be8','be9','be10','be11','be12','be13'];
+  let h='<div class="aco-detail">';
+  h+='<button class="back-btn" onclick="renderTable()">&#8592; Back to list</button>';
+  h+='<h4>'+r.nm+'</h4><p class="meta">'+r.tp+' &middot; '+r.cap+' &middot; '+r.st+' &middot; Tier: '+r.tier+'</p>';
+  const sections=[
+    ['Population',[['Beneficiaries',fmt(r.bene)],['Dual %',pct(r.dual)],['Risk Score',r.risk],['Complexity',r.cpx]]],
+    ['Financial',[['Benchmark PMPY','$'+fmt(r.bm)],['Savings Rate',pct(r.sr)],['Earned/Bene','$'+fmt(r.espb)],['Gross/Bene','$'+fmt(r.gspb)],['Quality',r.qs]]],
+    ['Peer Ranking',[['SR Ptl (All)',r.srpa],['SR Ptl (Peer)',r.srpp],['Earned Ptl',r.eppp],['Quality Ptl',r.qpp]]],
+    ['Utilization',[['ED/1000',r.ed],['Readmit %',pct(r.readm)],['IP/1000',r.ip],['SNF/1000',r.snf],['SNF $/Ep','$'+fmt(r.snfc)],['PCP 30d',pct(r.pcp)]]],
+    ['Scores',[['Util. Pressure',r.ups],['Care Coord. Gap',r.ccg],['Provider Cap %',pct(r.pcap)],['Waiver Intensity',r.pwi]]],
+    ['BE Adoption',[['Adoption Score',pct(r.bea)],['Activation Gap',r.bag],['Root Cause',r.cause]]]
+  ];
+  sections.forEach(([title,rows])=>{
+    h+='<div class="det-section"><p class="ds-title">'+title+'</p>';
+    rows.forEach(([l,v])=>{h+='<div class="det-row"><span class="dl">'+l+'</span><span class="dv">'+(v!=null?v:'—')+'</span></div>'});
+    h+='</div>';
+  });
+  h+='<div class="det-section"><p class="ds-title">Benefit Enhancements</p><div class="be-grid">';
+  beKeys.forEach(k=>{const on=r[k]===true;h+='<span class="be-tag '+(on?'yes':'no')+'">'+(on?'✓':'✗')+' '+BE_NAMES[k]+'</span>'});
+  h+='</div></div></div>';
+  document.getElementById('spBody').innerHTML=h;
+  // [v3] Open the side panel for detail view
+  document.getElementById('spIcon').innerHTML='&#x1F4CB;';
+  document.getElementById('spTitle').textContent=r.nm.substring(0,35);
+  document.getElementById('spFilter').innerHTML='<span class="badge">'+r.tp+'</span> <span class="badge">'+r.tier+' Tier</span>';
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.classList.add('panel-open');
+  setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})},300);
+}
+function fmt(v){return v==null?'—':typeof v==='number'?Math.round(v).toLocaleString():v}
+function pct(v){return v==null?'—':v.toFixed(1)+'%'}
+
+// ===== CHARTS =====
+
+// Distribution
+const distBins=[[-999,-5],[-5,0],[0,5],[5,10],[10,15],[15,999]];
+const distLabels=['< -5%','-5~0%','0~5%','5~10%','10~15%','> 15%'];
+function countBin(type,lo,hi){return D.filter(r=>r.tp===type&&r.sr>=lo&&r.sr<hi).length}
+charts['dist']=new Chart(document.getElementById('c-dist'),{type:'bar',
+data:{labels:distLabels,datasets:[
+{label:'High Needs',data:distBins.map(b=>countBin('High Needs',b[0],b[1])),backgroundColor:HN,borderRadius:3},
+{label:'Standard',data:distBins.map(b=>countBin('Standard',b[0],b[1])),backgroundColor:ST,borderRadius:3},
+{label:'New Entrant',data:distBins.map(b=>countBin('New Entrant',b[0],b[1])),backgroundColor:NE_,borderRadius:3}]},
+options:{responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;const el=els[0];const types=['High Needs','Standard','New Entrant'];const b=distBins[el.index];openPanel('dist',b[0]+'|'+b[1]+'|'+types[el.datasetIndex])},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw+' ACOs'}}},
+scales:{x:{grid:{display:false},ticks:{color:txt,font:{size:11}}},y:{grid:{color:grd},ticks:{color:txt}}}}});
+
+// ===== SCATTER with zoom/filter/table =====
+const scatterTypes=['High Needs','Standard','New Entrant'];
+const scatterColors=[HN,ST,NE_];const scatterRadii=[6,4,5];
+let scatterVisible={0:true,1:true,2:true};
+const scatterDS=scatterTypes.map((tp,i)=>({
+  label:tp,data:D.filter(r=>r.tp===tp).map(r=>({x:r.sr,y:r.espb,id:r.id})),
+  backgroundColor:scatterColors[i]+'99',borderColor:scatterColors[i],pointRadius:scatterRadii[i]
+}));
+
+// Compute original scale from data
+const allSR=D.map(r=>r.sr),allEspb=D.map(r=>r.espb);
+const scOrig={xMin:Math.floor(Math.min(...allSR)-2),xMax:Math.ceil(Math.max(...allSR)+2),yMin:Math.floor(Math.min(...allEspb)-500),yMax:Math.ceil(Math.max(...allEspb)+500)};
+let scCur={...scOrig};
+
+charts['scatter']=new Chart(document.getElementById('c-scatter'),{type:'scatter',data:{datasets:scatterDS},
+options:{responsive:true,maintainAspectRatio:false,layout:{padding:10},animation:{duration:0},
+onClick(e,els){if(window._scDragged)return;if(!els.length)return;const pt=scatterDS[els[0].datasetIndex].data[els[0].index];if(pt&&pt.id)openPanel('single',pt.id)},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const pt=scatterDS[c.datasetIndex].data[c.dataIndex];const r=D.find(x=>x.id===pt.id);return (r?r.nm.substring(0,30):'')+'  SR='+c.parsed.x.toFixed(1)+'% $'+Math.round(c.parsed.y).toLocaleString()}}}},
+scales:{x:{min:scOrig.xMin,max:scOrig.xMax,grid:{color:grd},ticks:{color:txt,callback:v=>v+'%'},title:{display:true,text:'Savings Rate (%)',color:txt,font:{size:12}}},
+y:{min:scOrig.yMin,max:scOrig.yMax,grid:{color:grd},ticks:{color:txt,callback:v=>'$'+Math.round(v).toLocaleString()},title:{display:true,text:'Earned / Bene ($)',color:txt,font:{size:12}}}}}});
+
+// Zoom controls
+function scatterZoom(factor){
+  const sc=charts['scatter'];
+  const xr=scCur.xMax-scCur.xMin,yr=scCur.yMax-scCur.yMin;
+  const xc=(scCur.xMin+scCur.xMax)/2,yc=(scCur.yMin+scCur.yMax)/2;
+  const nxr=xr*factor,nyr=yr*factor;
+  scCur={xMin:xc-nxr/2,xMax:xc+nxr/2,yMin:yc-nyr/2,yMax:yc+nyr/2};
+  sc.options.scales.x.min=scCur.xMin;sc.options.scales.x.max=scCur.xMax;
+  sc.options.scales.y.min=scCur.yMin;sc.options.scales.y.max=scCur.yMax;
+  sc.update();
+}
+document.getElementById('scZoomIn').addEventListener('click',()=>scatterZoom(0.7));
+document.getElementById('scZoomOut').addEventListener('click',()=>scatterZoom(1.4));
+document.getElementById('scReset').addEventListener('click',()=>{
+  scCur={...scOrig};const sc=charts['scatter'];
+  sc.options.scales.x.min=scOrig.xMin;sc.options.scales.x.max=scOrig.xMax;
+  sc.options.scales.y.min=scOrig.yMin;sc.options.scales.y.max=scOrig.yMax;
+  sc.update();
+});
+
+// [v3] Drag-to-pan on scatter chart
+(function(){
+  const canvas=document.getElementById('c-scatter');
+  let dragging=false,startX=0,startY=0,startScCur=null;
+  window._scDragged=false;
+  const DRAG_THRESHOLD=5;
+  canvas.addEventListener('mousedown',function(e){
+    if(e.button!==0)return;
+    dragging=true;window._scDragged=false;
+    startX=e.clientX;startY=e.clientY;
+    startScCur={...scCur};
+    canvas.style.cursor='grabbing';
+  });
+  window.addEventListener('mousemove',function(e){
+    if(!dragging)return;
+    const dx=e.clientX-startX,dy=e.clientY-startY;
+    if(Math.abs(dx)>DRAG_THRESHOLD||Math.abs(dy)>DRAG_THRESHOLD)window._scDragged=true;
+    if(!window._scDragged)return;
+    const sc=charts['scatter'];
+    const area=sc.chartArea;
+    if(!area)return;
+    const xRange=startScCur.xMax-startScCur.xMin;
+    const yRange=startScCur.yMax-startScCur.yMin;
+    const dataDx=-(dx/(area.right-area.left))*xRange;
+    const dataDy=(dy/(area.bottom-area.top))*yRange;
+    scCur.xMin=startScCur.xMin+dataDx;scCur.xMax=startScCur.xMax+dataDx;
+    scCur.yMin=startScCur.yMin+dataDy;scCur.yMax=startScCur.yMax+dataDy;
+    sc.options.scales.x.min=scCur.xMin;sc.options.scales.x.max=scCur.xMax;
+    sc.options.scales.y.min=scCur.yMin;sc.options.scales.y.max=scCur.yMax;
+    sc.update('none');
+  });
+  window.addEventListener('mouseup',function(e){
+    if(!dragging)return;
+    dragging=false;
+    canvas.style.cursor='grab';
+  });
+  canvas.style.cursor='grab';
+})();
+
+// Filter toggles
+document.querySelectorAll('.sc-filter').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>{
+    scatterVisible[i]=!scatterVisible[i];
+    btn.classList.toggle('active',scatterVisible[i]);
+    btn.classList.toggle('inactive',!scatterVisible[i]);
+    charts['scatter'].data.datasets[i].hidden=!scatterVisible[i];
+    charts['scatter'].update();
+    renderScatterTable();
+  });
+});
+
+// Scatter inline table
+function renderScatterTable(){
+  const wrap=document.getElementById('scatterTableWrap');
+  const visible=D.filter(r=>{
+    const idx=scatterTypes.indexOf(r.tp);return idx>=0&&scatterVisible[idx];
+  }).sort((a,b)=>b.sr-a.sr);
+  const cols=['nm','tp','sr','espb','qs','risk','st'];
+  let h='<table><thead><tr>';
+  cols.forEach(c=>{h+='<th>'+COL[c]+'</th>'});
+  h+='</tr></thead><tbody>';
+  visible.forEach(r=>{
+    h+='<tr data-id="'+r.id+'" onclick="openPanel(\'single\',\''+r.id+'\')">';
+    cols.forEach(c=>{
+      let v=r[c];
+      if(v==null){h+='<td>—</td>';return}
+      if(c==='nm'){h+='<td class="nm-cell">'+v+'</td>';return}
+      if(c==='sr'){h+='<td style="color:'+(v>=0?'var(--green)':'var(--red)')+'">'+v.toFixed(1)+'%</td>';return}
+      if(c==='espb'){h+='<td>$'+Math.round(v).toLocaleString()+'</td>';return}
+      if(typeof v==='number'){h+='<td>'+(Number.isInteger(v)?v:v.toFixed(2))+'</td>';return}
+      h+='<td>'+v+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+}
+// Initial render
+renderScatterTable();
+
+// [v3] Filter→side panel removed (inline table is sufficient)
+
+// Tier chart
+function tierPct(type,tier){const all=D.filter(r=>r.tp===type);const t=all.filter(r=>r.tier===tier);return all.length?Math.round(t.length/all.length*100):0}
+charts['tier']=new Chart(document.getElementById('c-tier'),{type:'bar',
+data:{labels:['High Needs','Standard','New Entrant'],datasets:[
+{label:'High',data:['High Needs','Standard','New Entrant'].map(t=>tierPct(t,'High')),backgroundColor:'#0F6E56',borderRadius:3},
+{label:'Middle',data:['High Needs','Standard','New Entrant'].map(t=>tierPct(t,'Middle')),backgroundColor:'#BA7517',borderRadius:3},
+{label:'Low',data:['High Needs','Standard','New Entrant'].map(t=>tierPct(t,'Low')),backgroundColor:'#A32D2D',borderRadius:3}]},
+options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;const types=['High Needs','Standard','New Entrant'];const tiers=['High','Middle','Low'];openPanel('tier',types[els[0].index]+'|'+tiers[els[0].datasetIndex])},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+' tier: '+c.raw+'%'}}},
+scales:{x:{stacked:true,grid:{display:false},ticks:{color:txt,callback:v=>v+'%'},max:100},y:{stacked:true,grid:{display:false},ticks:{color:txt,font:{size:12}}}}}});
+
+// Correlation
+const corrData=[{k:'risk',l:'Risk Score',v:0.405},{k:'qs',l:'Quality Score',v:0.233},{k:'dr',l:'Discount Rate',v:0.187},{k:'pcap',l:'Capitation %',v:0.163},{k:'ed',l:'ED Visits/1000',v:-0.035},{k:'readm',l:'Readmission Rate',v:-0.027},{k:'snf',l:'SNF Discharges',v:-0.069},{k:'ups',l:'Util. Pressure',v:-0.134},{k:'bea',l:'BE Adoption %',v:-0.166},{k:'dual',l:'Dual %',v:-0.202}];
+charts['corr']=new Chart(document.getElementById('c-corr'),{type:'bar',
+data:{labels:corrData.map(c=>c.l),datasets:[{data:corrData.map(c=>c.v),backgroundColor:corrData.map(c=>c.v>=0?'#0F6E56':'#A32D2D'),borderRadius:3}]},
+options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;openPanel('corr',corrData[els[0].index].k)},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'r = '+(c.raw>=0?'+':'')+c.raw.toFixed(3)}}},
+scales:{x:{grid:{color:grd},ticks:{color:txt},min:-0.3,max:0.5,title:{display:true,text:'Pearson r',color:txt,font:{size:12}}},y:{grid:{display:false},ticks:{color:txt,font:{size:11}}}}}});
+
+// Utilization
+function avgByType(type,col){const rows=D.filter(r=>r.tp===type&&r[col]!=null);return rows.length?rows.reduce((s,r)=>s+r[col],0)/rows.length:null}
+const utilMetrics=[{k:'ed',l:'ED Visits\n/1,000'},{k:'readm',l:'Readmission\nRate %'},{k:'ip',l:'IP Discharges\n/1,000'},{k:'snf',l:'SNF Discharges\n/1,000'},{k:'pcp',l:'PCP Visit\n30-Day %'}];
+charts['util']=new Chart(document.getElementById('c-util'),{type:'bar',
+data:{labels:utilMetrics.map(m=>m.l),datasets:[
+{label:'High Needs',data:utilMetrics.map(m=>Math.round(avgByType('High Needs',m.k)*10)/10),backgroundColor:HN,borderRadius:4},
+{label:'Standard',data:utilMetrics.map(m=>Math.round(avgByType('Standard',m.k)*10)/10),backgroundColor:ST,borderRadius:4},
+{label:'New Entrant',data:utilMetrics.map(m=>Math.round(avgByType('New Entrant',m.k)*10)/10),backgroundColor:NE_,borderRadius:4}]},
+options:{responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;const types=['High Needs','Standard','New Entrant'];openPanel('type',types[els[0].datasetIndex],[utilMetrics[els[0].index].k])},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw===null?'N/A':c.dataset.label+': '+c.raw}}},
+scales:{x:{grid:{display:false},ticks:{color:txt,font:{size:11}}},y:{grid:{color:grd},ticks:{color:txt}}}}});
+
+// Efficiency
+const effMetrics=[{k:'bm',l:'Benchmark\nPMPY ($K)',div:1000},{k:'ed',l:'ED Visits\n/1,000',div:1},{k:'readm',l:'Readmission\nRate %',div:1},{k:'ip',l:'IP Discharges\n/1,000',div:1},{k:'snf',l:'SNF Disch\n/1,000',div:1},{k:'snfc',l:'SNF $/Episode\n($K)',div:1000}];
+charts['eff']=new Chart(document.getElementById('c-eff'),{type:'bar',
+data:{labels:effMetrics.map(m=>m.l),datasets:[
+{label:'High Needs',data:effMetrics.map(m=>{const v=avgByType('High Needs',m.k);return v!=null?Math.round(v/m.div*10)/10:null}),backgroundColor:HN,borderRadius:3},
+{label:'Standard',data:effMetrics.map(m=>{const v=avgByType('Standard',m.k);return v!=null?Math.round(v/m.div*10)/10:null}),backgroundColor:ST,borderRadius:3},
+{label:'New Entrant',data:effMetrics.map(m=>{const v=avgByType('New Entrant',m.k);return v!=null?Math.round(v/m.div*10)/10:null}),backgroundColor:NE_,borderRadius:3}]},
+options:{responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;const types=['High Needs','Standard','New Entrant'];openPanel('type',types[els[0].datasetIndex])},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw==null?'N/A':c.dataset.label+': '+c.raw}}},
+scales:{x:{grid:{display:false},ticks:{color:txt,font:{size:10},maxRotation:45}},y:{grid:{color:grd},ticks:{color:txt}}}}});
+
+// Capitation
+function capPct(type,cap){const all=D.filter(r=>r.tp===type);const c=all.filter(r=>r.cap===cap);return all.length?Math.round(c.length/all.length*100):0}
+charts['cap']=new Chart(document.getElementById('c-cap'),{type:'bar',
+data:{labels:['High Needs','Standard','New Entrant'],datasets:[
+{label:'PCC (Primary Care)',data:['High Needs','Standard','New Entrant'].map(t=>capPct(t,'PCC')),backgroundColor:'#378ADD',borderRadius:3},
+{label:'TCC (Total Cost)',data:['High Needs','Standard','New Entrant'].map(t=>capPct(t,'TCC')),backgroundColor:'#85B7EB',borderRadius:3}]},
+options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;const types=['High Needs','Standard','New Entrant'];const caps=['PCC','TCC'];openPanel('cap',types[els[0].index]+'|'+caps[els[0].datasetIndex])},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw+'%'}}},
+scales:{x:{stacked:true,grid:{display:false},ticks:{color:txt,callback:v=>v+'%'},max:100},y:{stacked:true,grid:{display:false},ticks:{color:txt,font:{size:12}}}}}});
+
+// BE Adoption
+const beLabels=['Telehealth','SNF 3-Day\nWaiver','Post-Disch\nHome Visit','Care Mgmt\nHome Visit','Home Health\nWaiver','Cost Share\nPart B','Chronic\nReward','Concurrent\nHospice','Cardiac/Pulm\nRehab','Diabetic\nShoes','Home\nInfusion','Hospice\nCert','Medical\nNutrition'];
+const beKeys=['be1','be2','be3','be4','be5','be6','be7','be8','be9','be10','be11','be12','be13'];
+function beRate(type,key){const rows=D.filter(r=>r.tp===type&&r[key]!=null);const yes=rows.filter(r=>r[key]===true);return rows.length?Math.round(yes.length/rows.length*100):0}
+charts['be']=new Chart(document.getElementById('c-be'),{type:'bar',
+data:{labels:beLabels,datasets:[
+{label:'High Needs',data:beKeys.map(k=>beRate('High Needs',k)),backgroundColor:HN,borderRadius:3,barPercentage:0.8},
+{label:'Standard',data:beKeys.map(k=>beRate('Standard',k)),backgroundColor:ST,borderRadius:3,barPercentage:0.8},
+{label:'New Entrant',data:beKeys.map(k=>beRate('New Entrant',k)),backgroundColor:NE_,borderRadius:3,barPercentage:0.8}]},
+options:{responsive:true,maintainAspectRatio:false,
+onClick(e,els){if(!els.length)return;const types=['High Needs','Standard','New Entrant'];const tp=types[els[0].datasetIndex];const bk=beKeys[els[0].index];
+  panelData=D.filter(r=>r.tp===tp);panelColumns=['nm','tp','sr','espb','qs',bk,'bea','st'];panelSortKeys=[{col:'sr',dir:'desc'}];
+  document.getElementById('spIcon').innerHTML='&#x1F4CA;';
+  document.getElementById('spTitle').textContent=tp+' — '+BE_NAMES[bk];
+  renderPanelFilter('<span class="badge">'+tp+'</span> <span class="badge">'+BE_NAMES[bk]+'</span> ('+panelData.length+')');
+  renderTable();
+  document.getElementById('sidePanel').classList.add('open');document.body.classList.add('panel-open');
+  setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})},300)},
+plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw+'%'}}},
+scales:{x:{grid:{display:false},ticks:{color:txt,font:{size:10},maxRotation:45}},y:{grid:{color:grd},ticks:{color:txt,callback:v=>v+'%'},max:100}}}});
+
+// ===== TAB 4: DATA LIST =====
+(function(){
+  const dtCols=['nm','tp','st','cap','bene','dual','risk','bm','sr','espb','gspb','qs','tier','ed','readm','ip','snf','snfc','pcp','ups','ccg','pcap','bea','bag','cpx','cause'];
+  const numCols=new Set(['bene','dual','risk','bm','sr','espb','gspb','qs','ed','readm','ip','snf','snfc','pcp','ups','ccg','pcap','bea','bag','cpx','dr','srpa','srpp','eppp','qpp']);
+  let dtSortKeys=[];
+  let dtFilters={};
+  let dtFiltered=[...D];
+
+  function isNum(col){return numCols.has(col)}
+
+  function applyFilters(){
+    dtFiltered=D.filter(r=>{
+      for(const col in dtFilters){
+        const f=dtFilters[col];
+        const v=r[col];
+        if(f.type==='text'){
+          if(v==null||String(v).toLowerCase().indexOf(f.val.toLowerCase())<0)return false;
+        }else{
+          if(v==null)return false;
+          if(f.op==='='){if(v!==f.val)return false}
+          else if(f.op==='>='){if(v<f.val)return false}
+          else if(f.op==='<='){if(v>f.val)return false}
+          else if(f.op==='range'){if(v<f.min||v>f.max)return false}
+        }
+      }
+      return true;
+    });
+    applySort();
+  }
+
+  function applySort(){
+    if(dtSortKeys.length){
+      dtFiltered.sort((a,b)=>{
+        for(const sk of dtSortKeys){
+          let av=a[sk.col],bv=b[sk.col];
+          if(av==null&&bv==null)continue;
+          if(av==null)return 1;if(bv==null)return -1;
+          if(typeof av==='string')av=av.toLowerCase();
+          if(typeof bv==='string')bv=bv.toLowerCase();
+          if(av<bv)return sk.dir==='asc'?-1:1;
+          if(av>bv)return sk.dir==='asc'?1:-1;
+        }
+        return 0;
+      });
+    }
+    renderDtBody();
+  }
+
+  function renderDtHead(){
+    let h='<tr>';
+    dtCols.forEach(col=>{
+      const hasFlt=dtFilters[col]?'active':'';
+      const si=dtSortKeys.findIndex(s=>s.col===col);
+      let sortHtml='';
+      if(si>=0){
+        const arrow=dtSortKeys[si].dir==='asc'?'&#9650;':'&#9660;';
+        sortHtml='<span class="sort-ind">'+arrow+(dtSortKeys.length>1?'<sup>'+(si+1)+'</sup>':'')+'</span>';
+      }
+      h+='<th style="position:relative"><div class="th-inner" data-col="'+col+'">'+COL[col]+sortHtml+'</div><span class="flt-icon '+hasFlt+'" data-fcol="'+col+'" title="Filter">filter</span></th>';
+    });
+    h+='</tr>';
+    document.getElementById('dtHead').innerHTML=h;
+
+    // Sort click
+    document.querySelectorAll('.dt-table .th-inner').forEach(el=>{
+      el.addEventListener('click',function(e){
+        const col=this.dataset.col;
+        if(e.shiftKey){
+          const idx=dtSortKeys.findIndex(s=>s.col===col);
+          if(idx<0)dtSortKeys.push({col,dir:'desc'});
+          else if(dtSortKeys[idx].dir==='desc')dtSortKeys[idx].dir='asc';
+          else dtSortKeys.splice(idx,1);
+        }else{
+          const cur=dtSortKeys.find(s=>s.col===col);
+          if(!cur)dtSortKeys=[{col,dir:'desc'}];
+          else if(cur.dir==='desc')dtSortKeys=[{col,dir:'asc'}];
+          else dtSortKeys=[];
+        }
+        applySort();
+        renderDtHead();
+      });
+    });
+
+    // Filter icon click
+    document.querySelectorAll('.dt-table .flt-icon').forEach(el=>{
+      el.addEventListener('click',function(e){
+        e.stopPropagation();
+        const col=this.dataset.fcol;
+        // Close any open filter dropdown
+        document.querySelectorAll('.flt-drop').forEach(d=>d.remove());
+        const th=this.closest('th');
+        const drop=document.createElement('div');
+        drop.className='flt-drop';
+        const existing=dtFilters[col];
+
+        if(isNum(col)){
+          const ops=['=','>=','<=','range'];
+          const curOp=existing?existing.op:'>=';
+          let selHtml='<select class="flt-op">';
+          ops.forEach(op=>{selHtml+='<option value="'+op+'"'+(op===curOp?' selected':'')+'>'+op+'</option>'});
+          selHtml+='</select>';
+          const curVal=existing&&existing.op!=='range'?existing.val:'';
+          const curMin=existing&&existing.op==='range'?existing.min:'';
+          const curMax=existing&&existing.op==='range'?existing.max:'';
+          drop.innerHTML=selHtml+
+            '<div class="flt-single"><input type="number" class="flt-val" placeholder="Value" value="'+curVal+'" step="any"></div>'+
+            '<div class="flt-range" style="display:none"><div class="flt-row"><input type="number" class="flt-min" placeholder="Min" value="'+curMin+'" step="any"><input type="number" class="flt-max" placeholder="Max" value="'+curMax+'" step="any"></div></div>'+
+            '<div class="flt-actions"><button class="f-clear">Clear</button><button class="f-apply">Apply</button></div>';
+          th.appendChild(drop);
+          const sel=drop.querySelector('.flt-op');
+          const single=drop.querySelector('.flt-single');
+          const range=drop.querySelector('.flt-range');
+          function toggleMode(){if(sel.value==='range'){single.style.display='none';range.style.display='block'}else{single.style.display='block';range.style.display='none'}}
+          toggleMode();
+          sel.addEventListener('change',toggleMode);
+          drop.querySelector('.f-apply').addEventListener('click',function(){
+            const op=sel.value;
+            if(op==='range'){
+              const mn=parseFloat(drop.querySelector('.flt-min').value);
+              const mx=parseFloat(drop.querySelector('.flt-max').value);
+              if(!isNaN(mn)&&!isNaN(mx)){dtFilters[col]={type:'num',op:'range',min:mn,max:mx}}
+            }else{
+              const v=parseFloat(drop.querySelector('.flt-val').value);
+              if(!isNaN(v)){dtFilters[col]={type:'num',op:op,val:v}}
+            }
+            drop.remove();applyFilters();renderDtHead();renderFilterBar();
+          });
+        }else{
+          const curVal=existing?existing.val:'';
+          drop.innerHTML='<input type="text" class="flt-txt" placeholder="Contains..." value="'+curVal+'">'+
+            '<div class="flt-actions"><button class="f-clear">Clear</button><button class="f-apply">Apply</button></div>';
+          th.appendChild(drop);
+          drop.querySelector('.f-apply').addEventListener('click',function(){
+            const v=drop.querySelector('.flt-txt').value.trim();
+            if(v){dtFilters[col]={type:'text',val:v}}
+            drop.remove();applyFilters();renderDtHead();renderFilterBar();
+          });
+          // Enter key support
+          drop.querySelector('.flt-txt').addEventListener('keydown',function(e){if(e.key==='Enter')drop.querySelector('.f-apply').click()});
+        }
+        drop.querySelector('.f-clear').addEventListener('click',function(){
+          delete dtFilters[col];drop.remove();applyFilters();renderDtHead();renderFilterBar();
+        });
+        // Close on outside click
+        setTimeout(()=>{
+          function closeHandler(ev){if(!drop.contains(ev.target)&&ev.target!==el){drop.remove();document.removeEventListener('click',closeHandler)}}
+          document.addEventListener('click',closeHandler);
+        },0);
+      });
+    });
+  }
+
+  function renderDtBody(){
+    let h='';
+    dtFiltered.forEach(r=>{
+      h+='<tr onclick="openPanel(\'single\',\''+r.id+'\')">';
+      dtCols.forEach(c=>{
+        let v=r[c];
+        if(v==null){h+='<td>—</td>';return}
+        if(c==='nm'){h+='<td class="nm-cell">'+v+'</td>';return}
+        if(c==='sr'){h+='<td style="color:'+(v>=0?'var(--green)':'var(--red)')+'">'+v.toFixed(1)+'%</td>';return}
+        if(c==='espb'||c==='gspb'){h+='<td>$'+Math.round(v).toLocaleString()+'</td>';return}
+        if(c==='bm'||c==='snfc'){h+='<td>$'+Math.round(v).toLocaleString()+'</td>';return}
+        if(c==='bene'){h+='<td>'+Math.round(v).toLocaleString()+'</td>';return}
+        if(c==='dual'||c==='readm'||c==='pcp'||c==='bea'||c==='pcap'){h+='<td>'+(typeof v==='number'?v.toFixed(1)+'%':v)+'</td>';return}
+        if(typeof v==='number'){h+='<td>'+(Number.isInteger(v)?v.toLocaleString():v.toFixed(2))+'</td>';return}
+        h+='<td>'+v+'</td>';
+      });
+      h+='</tr>';
+    });
+    document.getElementById('dtBody').innerHTML=h;
+    document.getElementById('dtCount').textContent=dtFiltered.length;
+  }
+
+  function renderFilterBar(){
+    const bar=document.getElementById('dtFilterBar');
+    let h='';
+    const keys=Object.keys(dtFilters);
+    keys.forEach(col=>{
+      const f=dtFilters[col];
+      let label=COL[col]+': ';
+      if(f.type==='text')label+='"'+f.val+'"';
+      else if(f.op==='range')label+=f.min+' ~ '+f.max;
+      else label+=f.op+' '+f.val;
+      h+='<span class="fbadge">'+label+'<span class="fx" data-fcol="'+col+'">&times;</span></span>';
+    });
+    if(keys.length>1)h+='<button class="dt-clear-all" id="dtClearAll">Clear All</button>';
+    bar.innerHTML=h;
+    bar.querySelectorAll('.fx').forEach(el=>{
+      el.addEventListener('click',function(){
+        delete dtFilters[this.dataset.fcol];applyFilters();renderDtHead();renderFilterBar();
+      });
+    });
+    const ca=document.getElementById('dtClearAll');
+    if(ca)ca.addEventListener('click',function(){dtFilters={};applyFilters();renderDtHead();renderFilterBar()});
+  }
+
+  // Initialize
+  renderDtHead();
+  renderDtBody();
+  renderFilterBar();
+})();
+
+</script>
+</body>
+</html>
