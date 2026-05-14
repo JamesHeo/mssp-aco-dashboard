@@ -531,7 +531,13 @@ function renderP0Charts(){
     for(var j=s;j<e;j++){sS+=stbl[j].sr;hS+=stbl[j].hospPct;pS+=stbl[j].physPct;oS+=stbl[j].otherPct;g1ids[qi].push(stbl[j].id);cnt++;}
     qSav.push(cnt?sS/cnt:0);qHosp.push(cnt?hS/cnt:0);qPhys.push(cnt?pS/cnt:0);qOther.push(cnt?oS/cnt:0);}
   chartGroups.ch_tin_sav=g1ids;
-  chartInsights.ch_tin_sav='ACOs with the highest Other TIN composition (Q5, avg '+qOther[4].toFixed(0)+'%) show an average savings rate of <b>'+qSav[4].toFixed(1)+'%</b> vs <b>'+qSav[0].toFixed(1)+'%</b> for the lowest (Q1, avg '+qOther[0].toFixed(0)+'%). This positive correlation (r\u2248+0.19) suggests that diverse TIN portfolios\u2014including labs, imaging, and home health\u2014may support more efficient care delivery.<br><br><i>Based on '+stbl.length+' STABLE ACOs with TIN and performance data. Click any bar to filter the table below.</i>';
+  var _sumX=0,_sumY=0,_sumXY=0,_sumX2=0,_sumY2=0,_rN=stbl.length;
+  for(var _ri=0;_ri<_rN;_ri++){_sumX+=stbl[_ri].otherPct;_sumY+=stbl[_ri].sr;_sumXY+=stbl[_ri].otherPct*stbl[_ri].sr;_sumX2+=stbl[_ri].otherPct*stbl[_ri].otherPct;_sumY2+=stbl[_ri].sr*stbl[_ri].sr;}
+  var _rNum=_rN*_sumXY-_sumX*_sumY;var _rDen=Math.sqrt((_rN*_sumX2-_sumX*_sumX)*(_rN*_sumY2-_sumY*_sumY));
+  var _rVal=_rDen?(_rNum/_rDen):0;
+  var _rDesc=Math.abs(_rVal)>=0.3?'moderate ':(Math.abs(_rVal)>=0.15?'weak ':'very weak ');
+  _rDesc+=_rVal>=0?'positive':'negative';
+  chartInsights.ch_tin_sav='Q5 (highest Other TIN%, avg '+qOther[4].toFixed(0)+'%) shows avg savings rate <b>'+qSav[4].toFixed(1)+'%</b> vs Q1 (lowest, avg '+qOther[0].toFixed(0)+'%) at <b>'+qSav[0].toFixed(1)+'%</b>. Pearson r = <b>'+_rVal.toFixed(3)+'</b> ('+_rDesc+' correlation). The relationship is weak and should not be interpreted as causal.<br><br><i>Based on '+stbl.length+' STABLE ACOs with TIN and performance data. Click any bar to filter the table below.</i>';
   destroyChart('ch_tin_sav');
   charts.ch_tin_sav=new Chart(document.getElementById('ch_tin_sav'),{
     type:'bar',data:{labels:qL,
@@ -671,7 +677,9 @@ function renderP1Charts(){
   for(var fi=0;fi<flags.length;fi++){var cnt=0;
     for(var i=0;i<d.length;i++){if(d[i][flags[fi]]==='1'||d[i][flags[fi]]===1){cnt++;fIds[fi].push(d[i].aco_id);}}fCounts.push(cnt);}
   chartGroups.ch_flags=fIds;
-  chartInsights.ch_flags='SNF Waiver is the most widely adopted program flag (<b>'+fCounts[3]+' ACOs</b>, '+(fCounts[3]/d.length*100).toFixed(0)+'%), followed by AIP ('+fCounts[0]+'), PC Flex ('+fCounts[1]+'), and PSS ('+fCounts[2]+'). These optional program flags indicate advanced participation in CMS initiatives for care coordination and payment flexibility.<br><i>Click any bar to see which ACOs participate in that program.</i>';
+  var _fRank=[{n:'AIP',c:fCounts[0]},{n:'PC Flex',c:fCounts[1]},{n:'PSS',c:fCounts[2]},{n:'SNF Waiver',c:fCounts[3]}];
+  _fRank.sort(function(a,b){return b.c-a.c;});
+  chartInsights.ch_flags=_fRank[0].n+' is the most widely adopted program flag (<b>'+_fRank[0].c+' ACOs</b>, '+(_fRank[0].c/d.length*100).toFixed(0)+'%), followed by '+_fRank[1].n+' ('+_fRank[1].c+'), '+_fRank[2].n+' ('+_fRank[2].c+'), and '+_fRank[3].n+' ('+_fRank[3].c+'). These optional program flags indicate advanced participation in CMS initiatives for care coordination and payment flexibility.<br><i>Click any bar to see which ACOs participate in that program.</i>';
   destroyChart('ch_flags');
   charts.ch_flags=new Chart(document.getElementById('ch_flags'),{
     type:'bar',data:{labels:fLabels,datasets:[{label:'Participating',data:fCounts,backgroundColor:['#3b82f6cc','#10b981cc','#f59e0bcc','#8b5cf6cc']}]},
@@ -739,7 +747,10 @@ function renderP2Charts(){
       if(track===g.track&&d[i].aco_status_delta===g.status){sum+=(rawNum(d[i].s1_earn_save_loss)||0);cnt++;ids.push(d[i].aco_id);}}
     earnData.push(cnt?sum/cnt:0);earnIds.push(ids);}
   chartGroups.ch_earn_bar=earnIds;
-  chartInsights.ch_earn_bar='ENHANCED/STABLE ACOs earn the highest avg savings (<b>$'+(earnData[2]/1e6).toFixed(2)+'M</b>, n='+earnIds[2].length+'), while BASIC/DISSOLVED show <b>$'+(earnData[1]/1e6).toFixed(2)+'M</b> (n='+earnIds[1].length+'). ENHANCED track consistently outperforms BASIC across both status groups, reflecting the higher shared savings rates available under two-sided risk models.<br><i>Click any bar to filter the table to that Track\u00d7Status combination.</i>';
+  var _eMax=0,_eMin=0;
+  for(var _ei=1;_ei<earnData.length;_ei++){if(earnIds[_ei].length>0){if(earnData[_ei]>earnData[_eMax])_eMax=_ei;if(earnData[_ei]<earnData[_eMin])_eMin=_ei;}}
+  var _gap=((earnData[_eMax]-earnData[_eMin])/1e6).toFixed(2);
+  chartInsights.ch_earn_bar=grps[_eMax].label+' earns the highest avg savings (<b>$'+(earnData[_eMax]/1e6).toFixed(2)+'M</b>, n='+earnIds[_eMax].length+'), while '+grps[_eMin].label+' shows the lowest (<b>$'+(earnData[_eMin]/1e6).toFixed(2)+'M</b>, n='+earnIds[_eMin].length+'). The gap between highest and lowest is <b>$'+_gap+'M</b> per ACO.<br><i>Click any bar to filter the table to that Track\u00d7Status combination.</i>';
   destroyChart('ch_earn_bar');
   charts.ch_earn_bar=new Chart(document.getElementById('ch_earn_bar'),{
     type:'bar',data:{labels:grps.map(function(g){return g.label;}),datasets:[{label:'Avg Earned Savings $',data:earnData,backgroundColor:['#3b82f6cc','#3b82f666','#10b981cc','#10b98166']}]},
@@ -751,18 +762,20 @@ function renderP2Charts(){
   });
 
   /* ch_bench_exp (no click filter - duplicate) */
-  var statuses=['STABLE','NEW','DISSOLVED'];var benchAvg=[],expAvg=[];
-  for(var si=0;si<statuses.length;si++){var bSum=0,bN=0,eSum=0,eN=0;
-    for(var i=0;i<d.length;i++){if(d[i].aco_status_delta===statuses[si]){
+  var beStatuses=['STABLE','DISSOLVED'];var benchAvg=[],expAvg=[],beCounts=[];
+  for(var si=0;si<beStatuses.length;si++){var bSum=0,bN=0,eSum=0,eN=0;
+    for(var i=0;i<d.length;i++){if(d[i].aco_status_delta===beStatuses[si]){
       var bv=rawNum(d[i].s1_benchmark);var ev=rawNum(d[i].s1_expenditure);var nab=rawNum(d[i].s1_n_ab);
       if(bv!==null){bSum+=bv;bN++;}if(ev!==null&&nab){eSum+=ev/nab;eN++;}}}
-    benchAvg.push(bN?bSum/bN:0);expAvg.push(eN?eSum/eN:0);}
-  chartInsights.ch_bench_exp='STABLE ACOs: avg benchmark <b>$'+benchAvg[0].toFixed(0)+'/cap</b> vs expenditure <b>$'+expAvg[0].toFixed(0)+'/cap</b>. NEW ACOs show higher benchmark ($'+benchAvg[1].toFixed(0)+'/cap) reflecting CMS risk adjustment for new entrants. DISSOLVED ACOs had benchmark $'+benchAvg[2].toFixed(0)+'/cap vs expenditure $'+expAvg[2].toFixed(0)+'/cap.<br><i>Benchmark is per-capita, expenditure is total divided by beneficiary count. Use global Status filter to isolate groups.</i>';
+    benchAvg.push(bN?bSum/bN:0);expAvg.push(eN?eSum/eN:0);beCounts.push(bN);}
+  var newCount=0;for(var i=0;i<d.length;i++){if(d[i].aco_status_delta==='NEW')newCount++;}
+  var sDiff=benchAvg[0]-expAvg[0];var dDiff=benchAvg[1]-expAvg[1];
+  chartInsights.ch_bench_exp='<b>STABLE</b> (n='+beCounts[0]+'): avg benchmark <b>$'+benchAvg[0].toFixed(0)+'/cap</b> vs expenditure <b>$'+expAvg[0].toFixed(0)+'/cap</b> (gap: $'+sDiff.toFixed(0)+'/cap). <b>DISSOLVED</b> (n='+beCounts[1]+'): benchmark $'+benchAvg[1].toFixed(0)+'/cap vs expenditure $'+expAvg[1].toFixed(0)+'/cap (gap: $'+dDiff.toFixed(0)+'/cap).'+(newCount>0?' <b>NEW ACOs ('+newCount+')</b> are excluded from this chart as they have not yet completed a performance year and have no benchmark/expenditure data.':'')+'<br><i>Benchmark is the CMS per-capita spending target; expenditure is actual total spending divided by beneficiary count.</i>';
   destroyChart('ch_bench_exp');
   charts.ch_bench_exp=new Chart(document.getElementById('ch_bench_exp'),{
-    type:'bar',data:{labels:statuses,
+    type:'bar',data:{labels:beStatuses,
     datasets:[{label:'Benchmark $/cap',data:benchAvg,backgroundColor:'#3b82f6cc'},{label:'Expenditure $/cap',data:expAvg,backgroundColor:'#ef4444cc'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,font:{size:11}}},tooltip:{callbacks:{label:function(ctx){return '$'+ctx.raw.toFixed(0);}}}},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,font:{size:11}}},tooltip:{callbacks:{label:function(ctx){return '$'+ctx.raw.toFixed(0)+' (n='+beCounts[ctx.dataIndex]+')';}}}},
       scales:{y:{beginAtZero:false,ticks:{callback:function(v){return '$'+v.toFixed(0);}}}}}
   });
 
