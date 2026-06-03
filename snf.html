@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Yeji X · Post-acute risk navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Yeji X — Product UI v0.5 (HTML)
+     Aligned to Series A IR deck design system
+     ============================================================ */
+  :root {
+    --primary: #3D3D9C;
+    --brand-mid: #5959B5;
+    --accent: #A5B4E8;
+    --ink: #0F1530;
+    --ink-soft: #3A3F5C;
+    --ink-muted: #5F5E5A;
+    --surface: #F4F5FA;
+    --rule: #D3D1C7;
+    --white: #FFFFFF;
+    --positive: #3F7A5E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  ol, ul { list-style: none; }
+
+  /* utilities */
+  .ff-mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum'; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--brand-mid);
+  }
+  .eyebrow.muted { color: var(--ink-muted); }
+  .eyebrow.primary { color: var(--primary); }
+
+  .rule-b { border-bottom: 0.5px solid var(--rule); }
+  .rule-r { border-right: 0.5px solid var(--rule); }
+  .rule-t { border-top: 0.5px solid var(--rule); }
+  .rule-all { border: 0.5px solid var(--rule); }
+
+  .hairline {
+    height: 0.5px;
+    background: var(--rule);
+  }
+
+  @keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .pulse { animation: pulseSoft 2.4s ease-in-out infinite; }
+
+  /* ============================================================
+     TOP CHROME
+     ============================================================ */
+  .topbar {
+    background: var(--white);
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .topbar-row {
+    padding: 16px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wordmark-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+  }
+  .tabs {
+    padding: 0 80px;
+    display: flex;
+    margin-bottom: -1px;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    padding: 12px 48px 14px 0;
+    text-align: left;
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active {
+    border-bottom: 2px solid var(--ink);
+  }
+  .tab-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    letter-spacing: 0.05em;
+  }
+  .tab.active .tab-num { color: var(--primary); }
+  .tab-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    letter-spacing: -0.01em;
+    margin-left: 8px;
+  }
+  .tab.active .tab-label { color: var(--ink); }
+  .tab-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    padding-left: 22px;
+    margin-top: 2px;
+  }
+  .tab-top {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .footer {
+    padding: 12px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    font-size: 10px;
+    color: var(--ink-muted);
+    letter-spacing: 0.05em;
+    border-top: 0.5px solid var(--rule);
+  }
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ============================================================
+     LAYER 01 — Risk identification
+     ============================================================ */
+  .layer1 {
+    display: grid;
+    grid-template-columns: 240px 1fr 340px;
+    min-height: calc(100vh - 180px);
+    background: var(--white);
+  }
+  .l1-aside-left {
+    padding: 32px 28px;
+    background: var(--white);
+    border-right: 0.5px solid var(--rule);
+  }
+  .l1-aside-left .filter-group {
+    margin-top: 20px;
+  }
+  .l1-aside-left .filter-section {
+    margin-bottom: 20px;
+  }
+  .l1-aside-left .filter-section + .filter-section {
+    border-top: 0.5px solid var(--rule);
+    padding-top: 20px;
+  }
+  .filter-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .checkbox {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--ink);
+    background: transparent;
+    display: inline-block;
+  }
+  .checkbox.checked {
+    background: var(--ink);
+  }
+  .filter-option-text {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .l1-main {
+    padding: 32px 40px;
+    background: var(--white);
+  }
+  .l1-title {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin: 8px 0 4px 0;
+    line-height: 1.15;
+  }
+  .l1-subtitle {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 24px;
+  }
+
+  .kpi-strip {
+    background: var(--surface);
+    border: 0.5px solid var(--rule);
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .kpi-cell {
+    padding: 20px 24px;
+    border-right: 0.5px solid var(--rule);
+  }
+  .kpi-cell:last-child { border-right: none; }
+  .kpi-value {
+    font-family: 'Inter', sans-serif;
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+    font-size: 36px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    margin-top: 8px;
+    line-height: 1;
+  }
+  .kpi-value.accent { color: var(--primary); }
+  .kpi-value.positive { color: var(--positive); }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 8px;
+  }
+
+  .queue {
+    border: 0.5px solid var(--rule);
+    background: var(--white);
+  }
+  .queue-header,
+  .queue-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 1.4fr 1.6fr 1.2fr 80px 60px;
+    gap: 16px;
+    padding: 12px 20px;
+    align-items: center;
+  }
+  .queue-header {
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .queue-row {
+    padding: 16px 20px;
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .queue-row:last-child { border-bottom: none; }
+  .queue-row.selected { background: var(--surface); }
+
+  .text-right { text-align: right; }
+
+  .gauge {
+    position: relative;
+    width: 44px;
+    height: 44px;
+  }
+  .gauge svg {
+    transform: rotate(-90deg);
+  }
+  .gauge-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    font-feature-settings: 'tnum';
+  }
+
+  .patient-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .patient-name .age {
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+  .patient-meta {
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .endpoint-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary);
+  }
+  .endpoint-window {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-left: 6px;
+  }
+  .ensemble-bars {
+    display: flex;
+    gap: 2px;
+    height: 4px;
+    margin-top: 6px;
+  }
+  .ensemble-bar-bg {
+    flex: 1;
+    background: var(--rule);
+  }
+  .ensemble-bar-fill {
+    height: 100%;
+    background: var(--accent);
+  }
+  .ensemble-bar-fill.dominant { background: var(--primary); }
+  .ensemble-axis {
+    display: flex;
+    gap: 2px;
+    margin-top: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--ink-muted);
+  }
+  .ensemble-axis > span { flex: 1; }
+
+  .driver {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .driver + .driver::before {
+    content: '·';
+    color: var(--ink-muted);
+    margin: 0 8px;
+  }
+
+  .site-text {
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .spend-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .delta-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .delta-up { color: var(--primary); }
+  .delta-down { color: var(--positive); }
+  .delta-flat { color: var(--ink-muted); }
+
+  .queue-footer {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--ink-muted);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* L1 right rail */
+  .l1-aside-right {
+    padding: 32px 28px;
+    background: var(--surface);
+    border-left: 0.5px solid var(--rule);
+  }
+  .selected-name {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-top: 8px;
+  }
+  .selected-name .age {
+    color: var(--ink-muted);
+    font-weight: 400;
+    font-size: 18px;
+  }
+  .selected-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--white);
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 0.5px solid var(--rule);
+  }
+
+  .risk-hero {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 56px;
+    font-weight: 500;
+    color: var(--primary);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-top: 12px;
+  }
+  .spend-display {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin-top: 8px;
+  }
+  .spend-display .p95 {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  .ensemble-row {
+    margin-bottom: 10px;
+  }
+  .ensemble-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .ensemble-row-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .ensemble-row-label.dom {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .ensemble-row-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .ensemble-row-score.dom { color: var(--ink); }
+  .ensemble-row-track {
+    height: 3px;
+    background: var(--rule);
+  }
+  .ensemble-row-track-fill {
+    height: 3px;
+    background: var(--accent);
+  }
+  .ensemble-row-track-fill.dom {
+    background: var(--primary);
+  }
+  .ensemble-caption {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .shap-row {
+    margin-bottom: 8px;
+  }
+  .shap-row-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .shap-row-weight {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .shap-row-track {
+    height: 2px;
+    background: var(--rule);
+    margin-top: 3px;
+  }
+  .shap-row-track-fill {
+    height: 2px;
+    background: var(--brand-mid);
+  }
+
+  .pathway {
+    margin: 12px 0 24px 0;
+  }
+  .pathway-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .pathway-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pathway-text {
+    font-size: 12px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .primary-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ============================================================
+     LAYER 02 — Intervention workflow
+     ============================================================ */
+  .layer2 {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    min-height: calc(100vh - 180px);
+    background: var(--white);
+  }
+  .l2-main {
+    padding: 32px 40px 40px 80px;
+  }
+  .l2-header {
+    margin-bottom: 24px;
+  }
+  .l2-title {
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    margin: 8px 0 4px 0;
+    line-height: 1.15;
+  }
+  .l2-title .date {
+    font-weight: 400;
+    color: var(--ink-muted);
+    margin-left: 12px;
+    font-size: 22px;
+  }
+  .l2-subtitle {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 4px;
+  }
+
+  .resident-list {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .resident-card {
+    background: var(--white);
+    border: 0.5px solid var(--rule);
+  }
+  .resident-card-head {
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .resident-card-head.high {
+    background: var(--surface);
+  }
+  .resident-card-head-left {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .room-num {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .resident-name {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .resident-name .age {
+    font-weight: 400;
+    color: var(--ink-muted);
+  }
+  .resident-diag {
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .resident-card-head-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--primary);
+  }
+
+  .ai-line {
+    padding: 12px 24px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .ai-tag {
+    margin-top: 2px;
+  }
+  .ai-text {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .tasks {
+    padding: 16px 24px;
+  }
+  .task-list {
+    margin-top: 12px;
+  }
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 0.5px dashed var(--rule);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--ink);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .task-check.done {
+    border-color: var(--positive);
+    background: var(--positive);
+  }
+  .task-text {
+    font-size: 13px;
+    color: var(--ink);
+    flex: 1;
+  }
+  .task-text.done {
+    color: var(--ink-muted);
+    text-decoration: line-through;
+  }
+  .task-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+
+  .discharge-banner {
+    margin-top: 24px;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    border: 0.5px solid var(--rule);
+  }
+  .discharge-title {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .discharge-sub {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+  .inline-btn {
+    padding: 10px 16px;
+    background: var(--ink);
+    color: var(--white);
+    border: none;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* L2 right rail */
+  .l2-aside {
+    padding: 32px 28px;
+    background: var(--surface);
+    border-left: 0.5px solid var(--rule);
+  }
+  .dispatch-card {
+    background: var(--white);
+    padding: 20px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+    border: 0.5px solid var(--rule);
+    border-left: 2px solid var(--primary);
+  }
+  .dispatch-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .dispatch-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .dispatch-body {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .dispatch-link {
+    margin-top: 12px;
+    padding: 0 0 2px 0;
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--primary);
+  }
+
+  .pathway-pinned {
+    margin-top: 12px;
+    margin-bottom: 24px;
+  }
+  .pathway-card {
+    background: var(--white);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: 0.5px solid var(--rule);
+  }
+  .pathway-card-name {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .pathway-card-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+
+  .comms {
+    margin-top: 12px;
+  }
+  .comm-item {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .comm-time {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-muted);
+    margin-right: 6px;
+  }
+
+  /* ============================================================
+     LAYER 03 — Outcome attribution
+     ============================================================ */
+  .layer3 {
+    padding: 48px 80px 56px 80px;
+    background: var(--white);
+    min-height: calc(100vh - 180px);
+  }
+  .l3-masthead {
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .l3-h1 {
+    font-size: 48px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    margin: 12px 0 0 0;
+    line-height: 1.1;
+  }
+  .l3-h1 .sub {
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+  .l3-right {
+    text-align: right;
+  }
+  .l3-right-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 48px;
+    margin-bottom: 56px;
+  }
+  .hero-stat {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 144px;
+    font-weight: 500;
+    color: var(--primary);
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    margin-top: 12px;
+  }
+  .hero-stat .m {
+    color: var(--brand-mid);
+    font-weight: 400;
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  .mini-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .mini-kpi-value {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    margin-top: 8px;
+    line-height: 1;
+  }
+  .mini-kpi-value.positive { color: var(--positive); }
+  .mini-kpi-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 6px;
+  }
+
+  .chart-card {
+    border: 0.5px solid var(--rule);
+    padding: 24px;
+    background: var(--surface);
+  }
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-line {
+    width: 16px;
+    height: 2px;
+    background: var(--primary);
+    display: inline-block;
+  }
+  .legend-line.dashed {
+    height: 1px;
+    border-top: 1px dashed var(--ink-muted);
+    background: transparent;
+  }
+  .methodology {
+    padding-top: 16px;
+    margin-top: 24px;
+    border-top: 0.5px solid var(--rule);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .decomp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+    margin-bottom: 56px;
+  }
+  .decomp-card {
+    padding: 20px;
+    background: var(--surface);
+    border: 0.5px solid var(--rule);
+  }
+  .decomp-value {
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--primary);
+    letter-spacing: -0.025em;
+    margin-top: 12px;
+    line-height: 1;
+  }
+  .decomp-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+  .decomp-detail {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 8px;
+    font-style: italic;
+  }
+  .decomp-bar {
+    height: 4px;
+    background: var(--rule);
+    margin-top: 12px;
+  }
+  .decomp-bar-fill {
+    height: 4px;
+    background: var(--primary);
+  }
+
+  .perf-grid {
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+  .perf-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr;
+    padding: 14px 20px;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 0.5px solid var(--rule);
+  }
+  .perf-row:last-child { border-bottom: none; }
+  .perf-site {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  .perf-site.top { font-weight: 500; }
+  .perf-interventions {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .perf-savings {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .perf-rate-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .perf-rate-track {
+    flex: 1;
+    height: 4px;
+    background: var(--rule);
+  }
+  .perf-rate-fill {
+    height: 4px;
+    background: var(--primary);
+  }
+  .perf-rate-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-muted);
+    width: 32px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .economic-card {
+    margin-top: 16px;
+    padding: 24px;
+    background: var(--surface);
+    border: 0.5px solid var(--rule);
+  }
+  .economic-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .economic-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .economic-label {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  .economic-label.strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .economic-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--ink);
+    font-weight: 400;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .economic-value.strong {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .economic-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    text-align: right;
+  }
+  .economic-net {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+    font-style: normal;
+  }
+  .economic-net-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    color: var(--primary);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .roi-caption {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 12px;
+  }
+
+  .perf-caption {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 8px;
+  }
+
+  .report-footer {
+    padding-top: 16px;
+    border-top: 0.5px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TOP CHROME
+     ============================================================ -->
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="topbar-left">
+      <div class="wordmark">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <path d="M3 3 L11 11 M19 3 L11 11 L11 19" stroke="#3D3D9C" stroke-width="1.6" fill="none" stroke-linecap="square" />
+        </svg>
+        <span class="wordmark-text">Yeji X</span>
+      </div>
+      <span class="eyebrow">Post-acute risk navigator · v0.5</span>
+    </div>
+    <div class="topbar-right">
+      <span class="eyebrow muted">Cumberland Valley ACO · MSSP enhanced</span>
+      <div class="avatar">SH</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-view="aco">
+      <div class="tab-top">
+        <span class="tab-num">01</span>
+        <span class="tab-label">Risk identification</span>
+      </div>
+      <div class="tab-sub">ACO care management</div>
+    </button>
+    <button class="tab" data-view="snf">
+      <div class="tab-top">
+        <span class="tab-num">02</span>
+        <span class="tab-label">Intervention workflow</span>
+      </div>
+      <div class="tab-sub">SNF morning huddle</div>
+    </button>
+    <button class="tab" data-view="outcome">
+      <div class="tab-top">
+        <span class="tab-num">03</span>
+        <span class="tab-label">Outcome attribution</span>
+      </div>
+      <div class="tab-sub">Quarterly board report</div>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     LAYER 01 — Risk identification
+     ============================================================ -->
+<div class="view active" id="view-aco">
+  <div class="layer1">
+    <!-- Left rail -->
+    <aside class="l1-aside-left">
+      <div class="eyebrow muted">Population lens</div>
+      <div class="filter-group">
+        <div class="filter-section">
+          <div class="filter-title">Window</div>
+          <label class="filter-option"><span class="checkbox"></span><span class="filter-option-text">7 days</span></label>
+          <label class="filter-option"><span class="checkbox"></span><span class="filter-option-text">14 days</span></label>
+          <label class="filter-option"><span class="checkbox checked"></span><span class="filter-option-text">30 days</span></label>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Event type</div>
+          <label class="filter-option"><span class="checkbox checked"></span><span class="filter-option-text">Readmission</span></label>
+          <label class="filter-option"><span class="checkbox checked"></span><span class="filter-option-text">SNF over-stay</span></label>
+          <label class="filter-option"><span class="checkbox"></span><span class="filter-option-text">ED revisit</span></label>
+          <label class="filter-option"><span class="checkbox"></span><span class="filter-option-text">Skilled day overuse</span></label>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Care site</div>
+          <label class="filter-option"><span class="checkbox checked"></span><span class="filter-option-text">All SNF partners</span></label>
+          <label class="filter-option"><span class="checkbox"></span><span class="filter-option-text">Home + home health</span></label>
+          <label class="filter-option"><span class="checkbox"></span><span class="filter-option-text">PCP clinic only</span></label>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Attributed PCP pod</div>
+          <div style="font-size: 12px; color: var(--ink-muted);">4 pods · 23 PCPs</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="l1-main">
+      <div class="eyebrow">The queue · today</div>
+      <h1 class="l1-title">Today's triage queue</h1>
+      <div class="l1-subtitle">Ranked by intervenable spend · ensemble dominant endpoint</div>
+
+      <div class="kpi-strip">
+        <div class="kpi-cell">
+          <div class="eyebrow">Attributed lives</div>
+          <div class="kpi-value tnum">14,212</div>
+          <div class="kpi-sub">Q4 2026 cohort</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="eyebrow">In 30-day window</div>
+          <div class="kpi-value tnum">47</div>
+          <div class="kpi-sub">+6 since yesterday</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="eyebrow">Critical (≥80)</div>
+          <div class="kpi-value tnum accent">12</div>
+          <div class="kpi-sub">Touch today</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="eyebrow">Spend at risk</div>
+          <div class="kpi-value tnum accent">$340.2k</div>
+          <div class="kpi-sub">Modeled · 30d</div>
+        </div>
+      </div>
+
+      <div class="queue">
+        <div class="queue-header">
+          <div class="eyebrow muted">Risk</div>
+          <div class="eyebrow muted">Patient</div>
+          <div class="eyebrow muted">Dominant endpoint</div>
+          <div class="eyebrow muted">Top drivers</div>
+          <div class="eyebrow muted">Intervention site</div>
+          <div class="eyebrow muted text-right">Spend</div>
+          <div class="eyebrow muted text-right">Δ 7d</div>
+        </div>
+
+        <!-- Row 1 -->
+        <div class="queue-row selected">
+          <div class="gauge">
+            <svg width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#D3D1C7" stroke-width="2"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#3D3D9C" stroke-width="2.5" stroke-dasharray="113.1" stroke-dashoffset="9.05"/>
+            </svg>
+            <div class="gauge-value">92</div>
+          </div>
+          <div>
+            <div class="patient-name">M.R. <span class="age">· 78F</span></div>
+            <div class="patient-meta">P-2841 · Dr. Patel · Cumberland Internal</div>
+          </div>
+          <div>
+            <div><span class="endpoint-label">Readmit-30d</span><span class="endpoint-window">· 7d</span></div>
+            <div class="ensemble-bars">
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill dominant" style="width: 92%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 64%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 51%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 28%;"></div></div>
+            </div>
+            <div class="ensemble-axis"><span>R</span><span>L</span><span>E</span><span>S</span></div>
+          </div>
+          <div>
+            <span class="driver">CHF discharge · 4d</span><span class="driver">BNP 1,840 at d/c</span><span class="driver">Lives alone</span><span class="driver">No PCP follow-up</span>
+          </div>
+          <div class="site-text">Magnolia SNF</div>
+          <div class="spend-text">$24.8k</div>
+          <div class="delta-text delta-up">+18</div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="queue-row">
+          <div class="gauge">
+            <svg width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#D3D1C7" stroke-width="2"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#3D3D9C" stroke-width="2.5" stroke-dasharray="113.1" stroke-dashoffset="14.70"/>
+            </svg>
+            <div class="gauge-value">87</div>
+          </div>
+          <div>
+            <div class="patient-name">J.W. <span class="age">· 71M</span></div>
+            <div class="patient-meta">P-3017 · Dr. Chen · Stones River</div>
+          </div>
+          <div>
+            <div><span class="endpoint-label">Readmit-30d</span><span class="endpoint-window">· 14d</span></div>
+            <div class="ensemble-bars">
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill dominant" style="width: 87%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 49%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 71%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 33%;"></div></div>
+            </div>
+            <div class="ensemble-axis"><span>R</span><span>L</span><span>E</span><span>S</span></div>
+          </div>
+          <div>
+            <span class="driver">COPD exacerbation · 2nd this Q</span><span class="driver">12 active meds</span><span class="driver">AKI on d/c (Cr 1.9)</span>
+          </div>
+          <div class="site-text">Riverbend Post-Acute</div>
+          <div class="spend-text">$19.2k</div>
+          <div class="delta-text delta-up">+11</div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="queue-row">
+          <div class="gauge">
+            <svg width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#D3D1C7" stroke-width="2"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#3D3D9C" stroke-width="2.5" stroke-dasharray="113.1" stroke-dashoffset="21.49"/>
+            </svg>
+            <div class="gauge-value">81</div>
+          </div>
+          <div>
+            <div class="patient-name">L.D. <span class="age">· 84F</span></div>
+            <div class="patient-meta">P-2909 · Dr. Patel · Cumberland Internal</div>
+          </div>
+          <div>
+            <div><span class="endpoint-label">SNF over-stay</span><span class="endpoint-window">· 10d</span></div>
+            <div class="ensemble-bars">
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 58%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill dominant" style="width: 81%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 39%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 76%;"></div></div>
+            </div>
+            <div class="ensemble-axis"><span>R</span><span>L</span><span>E</span><span>S</span></div>
+          </div>
+          <div>
+            <span class="driver">Hip fracture · POD 6</span><span class="driver">PT slope 22% below cohort</span><span class="driver">Family meeting overdue</span>
+          </div>
+          <div class="site-text">Magnolia SNF</div>
+          <div class="spend-text">$16.1k</div>
+          <div class="delta-text delta-up">+6</div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="queue-row">
+          <div class="gauge">
+            <svg width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#D3D1C7" stroke-width="2"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#5959B5" stroke-width="2.5" stroke-dasharray="113.1" stroke-dashoffset="24.88"/>
+            </svg>
+            <div class="gauge-value">78</div>
+          </div>
+          <div>
+            <div class="patient-name">R.A. <span class="age">· 69M</span></div>
+            <div class="patient-meta">P-3122 · Dr. Okafor · East Nashville</div>
+          </div>
+          <div>
+            <div><span class="endpoint-label">ED revisit</span><span class="endpoint-window">· 21d</span></div>
+            <div class="ensemble-bars">
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 54%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 41%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill dominant" style="width: 78%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 22%;"></div></div>
+            </div>
+            <div class="ensemble-axis"><span>R</span><span>L</span><span>E</span><span>S</span></div>
+          </div>
+          <div>
+            <span class="driver">3 ED visits in 90d</span><span class="driver">Dual eligible · transport gap</span><span class="driver">Diabetic, A1c 9.4</span>
+          </div>
+          <div class="site-text">Home + community paramedic</div>
+          <div class="spend-text">$12.4k</div>
+          <div class="delta-text delta-flat">—</div>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="queue-row">
+          <div class="gauge">
+            <svg width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#D3D1C7" stroke-width="2"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#5959B5" stroke-width="2.5" stroke-dasharray="113.1" stroke-dashoffset="36.20"/>
+            </svg>
+            <div class="gauge-value">68</div>
+          </div>
+          <div>
+            <div class="patient-name">B.K. <span class="age">· 76F</span></div>
+            <div class="patient-meta">P-2756 · Dr. Liu · Belle Meade Primary</div>
+          </div>
+          <div>
+            <div><span class="endpoint-label">Readmit-30d</span><span class="endpoint-window">· 30d</span></div>
+            <div class="ensemble-bars">
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill dominant" style="width: 68%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 52%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 47%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 31%;"></div></div>
+            </div>
+            <div class="ensemble-axis"><span>R</span><span>L</span><span>E</span><span>S</span></div>
+          </div>
+          <div>
+            <span class="driver">Pneumonia · d/c d10</span><span class="driver">Med rec gap (warfarin)</span><span class="driver">PHQ-9: 14</span>
+          </div>
+          <div class="site-text">Magnolia SNF</div>
+          <div class="spend-text">$9.8k</div>
+          <div class="delta-text delta-down">−4</div>
+        </div>
+
+        <!-- Row 6 -->
+        <div class="queue-row">
+          <div class="gauge">
+            <svg width="44" height="44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#D3D1C7" stroke-width="2"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#5959B5" stroke-width="2.5" stroke-dasharray="113.1" stroke-dashoffset="38.46"/>
+            </svg>
+            <div class="gauge-value">66</div>
+          </div>
+          <div>
+            <div class="patient-name">T.M. <span class="age">· 82M</span></div>
+            <div class="patient-meta">P-3089 · Dr. Chen · Stones River</div>
+          </div>
+          <div>
+            <div><span class="endpoint-label">Skilled day overuse</span><span class="endpoint-window">· 14d</span></div>
+            <div class="ensemble-bars">
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 44%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 51%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill" style="width: 38%;"></div></div>
+              <div class="ensemble-bar-bg"><div class="ensemble-bar-fill dominant" style="width: 66%;"></div></div>
+            </div>
+            <div class="ensemble-axis"><span>R</span><span>L</span><span>E</span><span>S</span></div>
+          </div>
+          <div>
+            <span class="driver">Functional plateau · day 9</span><span class="driver">PT diminishing returns</span><span class="driver">UM review pending</span>
+          </div>
+          <div class="site-text">Riverbend Post-Acute</div>
+          <div class="spend-text">$8.9k</div>
+          <div class="delta-text delta-up">+3</div>
+        </div>
+      </div>
+
+      <div class="queue-footer">
+        <span>Showing 6 of 47 · sorted by intervenable spend</span>
+        <span>Ensemble v3.2 · 4 endpoint models · pathway optimizer v1.2 · 09:14 CT</span>
+      </div>
+    </main>
+
+    <!-- Right rail -->
+    <aside class="l1-aside-right">
+      <div class="eyebrow muted">Selected · P-2841</div>
+      <div class="selected-name">M.R. <span class="age">· 78F</span></div>
+      <div class="selected-sub">CHF readmission risk · 7-day window</div>
+
+      <div class="card">
+        <div class="eyebrow">Risk score · ensemble</div>
+        <div class="risk-hero">92</div>
+        <div class="hairline" style="margin: 16px 0;"></div>
+        <div class="eyebrow">Modeled 30-d spend if no action</div>
+        <div class="spend-display">$24,800<span class="p95">P95 $41.2k</span></div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+          <span class="eyebrow">Endpoint ensemble</span>
+          <span class="eyebrow primary">Readmit dominant</span>
+        </div>
+        <div class="ensemble-row">
+          <div class="ensemble-row-head">
+            <span class="ensemble-row-label dom">Readmit-30d</span>
+            <span class="ensemble-row-score dom">92</span>
+          </div>
+          <div class="ensemble-row-track"><div class="ensemble-row-track-fill dom" style="width: 92%;"></div></div>
+        </div>
+        <div class="ensemble-row">
+          <div class="ensemble-row-head">
+            <span class="ensemble-row-label">SNF over-stay</span>
+            <span class="ensemble-row-score">64</span>
+          </div>
+          <div class="ensemble-row-track"><div class="ensemble-row-track-fill" style="width: 64%;"></div></div>
+        </div>
+        <div class="ensemble-row">
+          <div class="ensemble-row-head">
+            <span class="ensemble-row-label">ED revisit</span>
+            <span class="ensemble-row-score">51</span>
+          </div>
+          <div class="ensemble-row-track"><div class="ensemble-row-track-fill" style="width: 51%;"></div></div>
+        </div>
+        <div class="ensemble-row">
+          <div class="ensemble-row-head">
+            <span class="ensemble-row-label">Skilled day overuse</span>
+            <span class="ensemble-row-score">28</span>
+          </div>
+          <div class="ensemble-row-track"><div class="ensemble-row-track-fill" style="width: 28%;"></div></div>
+        </div>
+        <div class="ensemble-caption">Pathway optimizer selected the readmit bundle: highest expected savings × intervenability score.</div>
+      </div>
+
+      <div class="eyebrow muted">Why · top contributors</div>
+      <div style="margin: 12px 0 24px 0;">
+        <div class="shap-row">
+          <div class="shap-row-head"><span>BNP at d/c (1,840)</span><span class="shap-row-weight">88</span></div>
+          <div class="shap-row-track"><div class="shap-row-track-fill" style="width: 88%;"></div></div>
+        </div>
+        <div class="shap-row">
+          <div class="shap-row-head"><span>Discharge LOS 8d</span><span class="shap-row-weight">64</span></div>
+          <div class="shap-row-track"><div class="shap-row-track-fill" style="width: 64%;"></div></div>
+        </div>
+        <div class="shap-row">
+          <div class="shap-row-head"><span>No PCP follow-up in 14d</span><span class="shap-row-weight">58</span></div>
+          <div class="shap-row-track"><div class="shap-row-track-fill" style="width: 58%;"></div></div>
+        </div>
+        <div class="shap-row">
+          <div class="shap-row-head"><span>Lives alone (SDoH)</span><span class="shap-row-weight">41</span></div>
+          <div class="shap-row-track"><div class="shap-row-track-fill" style="width: 41%;"></div></div>
+        </div>
+        <div class="shap-row">
+          <div class="shap-row-head"><span>Loop diuretic, no titration</span><span class="shap-row-weight">33</span></div>
+          <div class="shap-row-track"><div class="shap-row-track-fill" style="width: 33%;"></div></div>
+        </div>
+      </div>
+
+      <div class="eyebrow muted">Recommended pathway</div>
+      <ol class="pathway">
+        <li class="pathway-item"><span class="pathway-num">01</span><span class="pathway-text">Push to Magnolia SNF charge nurse queue</span></li>
+        <li class="pathway-item"><span class="pathway-num">02</span><span class="pathway-text">Schedule PCP telehealth follow-up within 72h</span></li>
+        <li class="pathway-item"><span class="pathway-num">03</span><span class="pathway-text">Diuretic titration protocol · cardiology e-consult</span></li>
+        <li class="pathway-item"><span class="pathway-num">04</span><span class="pathway-text">Daily weights · home BP cuff dispatched</span></li>
+      </ol>
+
+      <button class="primary-btn">Dispatch to SNF queue →</button>
+    </aside>
+  </div>
+</div>
+
+<!-- ============================================================
+     LAYER 02 — Intervention workflow
+     ============================================================ -->
+<div class="view" id="view-snf">
+  <div class="layer2">
+    <main class="l2-main">
+      <div class="l2-header">
+        <div class="eyebrow muted">Magnolia Skilled Nursing · Hall 2</div>
+        <h1 class="l2-title">Morning huddle<span class="date">Tuesday · Nov 17</span></h1>
+        <div class="l2-subtitle">22 active residents · 3 high · 5 medium · 14 stable</div>
+      </div>
+
+      <div class="kpi-strip" style="margin-bottom: 32px;">
+        <div class="kpi-cell">
+          <div class="eyebrow">Active residents</div>
+          <div class="kpi-value tnum" style="font-size: 32px;">22</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="eyebrow">Avg LOS this month</div>
+          <div class="kpi-value tnum" style="font-size: 32px;">18.4d</div>
+          <div class="kpi-sub">Target ≤ 21</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="eyebrow">30-d readmit rate</div>
+          <div class="kpi-value tnum positive" style="font-size: 32px;">11.2%</div>
+          <div class="kpi-sub">Q3: 14.8%</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="eyebrow">ACO-aligned tasks open</div>
+          <div class="kpi-value tnum accent" style="font-size: 32px;">9</div>
+          <div class="kpi-sub">3 due today</div>
+        </div>
+      </div>
+
+      <div class="eyebrow muted">Residents flagged by ACO · attend first</div>
+
+      <div class="resident-list">
+        <!-- Resident 1 -->
+        <div class="resident-card">
+          <div class="resident-card-head high">
+            <div class="resident-card-head-left">
+              <div class="room-num">Room 208A</div>
+              <div class="resident-name">M.R. <span class="age">· 78</span></div>
+              <div class="resident-diag">CHF, post-CABG · arrived 4 days ago</div>
+            </div>
+            <div class="resident-card-head-right">
+              <span class="pulse-dot pulse"></span>
+              <span class="eyebrow primary">Readmit-30d · 92</span>
+            </div>
+          </div>
+          <div class="ai-line">
+            <span class="eyebrow ai-tag">AI</span>
+            <span class="ai-text">Ensemble flagged Readmit-30d as dominant (92). LOS 64, ED 51, Skilled 28. Pathway: CHF post-d/c bundle.</span>
+          </div>
+          <div class="tasks">
+            <div class="eyebrow muted">Today's pathway · 4 tasks</div>
+            <div class="task-list">
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Med reconciliation with pharmacist</div>
+                  <div class="task-meta">Pharm. Kim · due today</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check done">
+                  <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5 L4 7 L8 3" stroke="#FFFFFF" stroke-width="1.5" fill="none"/></svg>
+                </span>
+                <div style="flex: 1;">
+                  <div class="task-text done">Daily weights · log to flowsheet</div>
+                  <div class="task-meta">CNA team · due today</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Cardiology e-consult re: diuretic titration</div>
+                  <div class="task-meta">Dr. on-call · due by 14:00</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Schedule PCP telehealth · Dr. Patel</div>
+                  <div class="task-meta">Case mgr · due before d/c</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resident 2 -->
+        <div class="resident-card">
+          <div class="resident-card-head high">
+            <div class="resident-card-head-left">
+              <div class="room-num">Room 211B</div>
+              <div class="resident-name">L.D. <span class="age">· 84</span></div>
+              <div class="resident-diag">Hip fracture, post-op · arrived 6 days ago</div>
+            </div>
+            <div class="resident-card-head-right">
+              <span class="pulse-dot pulse"></span>
+              <span class="eyebrow primary">SNF over-stay · 81</span>
+            </div>
+          </div>
+          <div class="ai-line">
+            <span class="eyebrow ai-tag">AI</span>
+            <span class="ai-text">Ensemble flagged SNF over-stay as dominant (81). Readmit 58, Skilled 76. Pathway: hip fx PT escalation + family alignment.</span>
+          </div>
+          <div class="tasks">
+            <div class="eyebrow muted">Today's pathway · 4 tasks</div>
+            <div class="task-list">
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">PT 5×/wk · reassess slope (22% below cohort)</div>
+                  <div class="task-meta">PT Wallace · due today</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Family meeting · goals of care</div>
+                  <div class="task-meta">Case mgr · due this week</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Cognitive screen (MoCA repeat)</div>
+                  <div class="task-meta">OT · due Wed</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check done">
+                  <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5 L4 7 L8 3" stroke="#FFFFFF" stroke-width="1.5" fill="none"/></svg>
+                </span>
+                <div style="flex: 1;">
+                  <div class="task-text done">DVT prophylaxis confirmation</div>
+                  <div class="task-meta">RN · due today</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resident 3 -->
+        <div class="resident-card">
+          <div class="resident-card-head">
+            <div class="resident-card-head-left">
+              <div class="room-num">Room 215A</div>
+              <div class="resident-name">B.K. <span class="age">· 76</span></div>
+              <div class="resident-diag">Pneumonia, recovery · arrived 10 days ago</div>
+            </div>
+            <div class="resident-card-head-right">
+              <span class="eyebrow" style="color: var(--brand-mid);">Readmit-30d · 68</span>
+            </div>
+          </div>
+          <div class="ai-line">
+            <span class="eyebrow ai-tag">AI</span>
+            <span class="ai-text">Ensemble flagged Readmit-30d (68). Med rec gap + depression screen drive risk. Pathway: polypharmacy reconciliation + behavioral handoff.</span>
+          </div>
+          <div class="tasks">
+            <div class="eyebrow muted">Today's pathway · 3 tasks</div>
+            <div class="task-list">
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Warfarin · INR check</div>
+                  <div class="task-meta">Lab · due today</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">PHQ-9 follow-up · score 14</div>
+                  <div class="task-meta">SW · due this week</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <span class="task-check"></span>
+                <div style="flex: 1;">
+                  <div class="task-text">Discharge planning meeting</div>
+                  <div class="task-meta">Case mgr · due Wed</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="discharge-banner">
+        <div>
+          <div class="discharge-title">Discharges scheduled today</div>
+          <div class="discharge-sub">2 residents · warm handoff template ready</div>
+        </div>
+        <button class="inline-btn">Open discharge queue →</button>
+      </div>
+    </main>
+
+    <aside class="l2-aside">
+      <div class="eyebrow muted">From Cumberland Valley ACO</div>
+
+      <div class="dispatch-card">
+        <div class="dispatch-head">
+          <span class="pulse-dot pulse"></span>
+          <span class="eyebrow primary">New dispatch · 09:14</span>
+        </div>
+        <div class="dispatch-title">M.R. · Room 208A</div>
+        <div class="dispatch-body">CHF readmit risk 92. Pre-built pathway: med rec, cardiology e-consult, telehealth follow-up, BP cuff dispatch.</div>
+        <button class="dispatch-link">Accept and assign →</button>
+      </div>
+
+      <div class="eyebrow muted">Standing pathways · pinned</div>
+      <div class="pathway-pinned">
+        <div class="pathway-card">
+          <div class="pathway-card-name">CHF post-d/c · 7-day bundle</div>
+          <div class="pathway-card-meta">Used 38× this Q</div>
+        </div>
+        <div class="pathway-card">
+          <div class="pathway-card-name">Hip fracture · PT escalation</div>
+          <div class="pathway-card-meta">Used 22× this Q</div>
+        </div>
+        <div class="pathway-card">
+          <div class="pathway-card-name">COPD exacerbation watch</div>
+          <div class="pathway-card-meta">Used 19× this Q</div>
+        </div>
+        <div class="pathway-card">
+          <div class="pathway-card-name">Polypharmacy reconciliation</div>
+          <div class="pathway-card-meta">Used 41× this Q</div>
+        </div>
+      </div>
+
+      <div class="eyebrow muted">Comms today</div>
+      <div class="comms">
+        <div class="comm-item"><span class="comm-time">11:02</span>Dr. Patel acknowledged follow-up for M.R. · scheduled Wed 14:30</div>
+        <div class="comm-item"><span class="comm-time">10:48</span>Cardiology e-consult queued · Dr. Reyes covering</div>
+        <div class="comm-item"><span class="comm-time">10:31</span>BP cuff dispatch confirmed · arrives Thu</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ============================================================
+     LAYER 03 — Outcome attribution
+     ============================================================ -->
+<div class="view" id="view-outcome">
+  <main class="layer3">
+    <div class="l3-masthead">
+      <div>
+        <div class="eyebrow muted">Quarterly attribution report · Q3 2026</div>
+        <h1 class="l3-h1">Cumberland Valley ACO<br><span class="sub">Realized savings · Jul–Sep</span></h1>
+      </div>
+      <div class="l3-right">
+        <div class="eyebrow muted">Prepared for board · Nov 18</div>
+        <div class="l3-right-sub">14,212 attributed lives · MSSP enhanced</div>
+      </div>
+    </div>
+
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow muted">Attributable savings · post-acute and readmission</div>
+        <div class="hero-stat">$2.41<span class="m">M</span></div>
+        <div class="hero-sub">Against $4.18M counterfactual baseline · 57.7% reduction</div>
+
+        <div class="hairline" style="margin: 32px 0 24px 0;"></div>
+
+        <div class="mini-kpi-grid">
+          <div>
+            <div class="eyebrow muted">Predictions issued</div>
+            <div class="mini-kpi-value tnum">1,847</div>
+            <div class="mini-kpi-sub">Across 47 SNF + clinic sites</div>
+          </div>
+          <div>
+            <div class="eyebrow muted">Interventions executed</div>
+            <div class="mini-kpi-value tnum">1,392</div>
+            <div class="mini-kpi-sub">75.4% intervention rate</div>
+          </div>
+          <div>
+            <div class="eyebrow muted">Events avoided</div>
+            <div class="mini-kpi-value tnum positive">284</div>
+            <div class="mini-kpi-sub">Readmits + ED revisits</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="chart-card">
+          <div class="eyebrow muted">Readmission rate · 7-month trend</div>
+          <svg viewBox="0 0 360 180" width="100%" height="180" style="margin-top: 12px;">
+            <!-- Counterfactual dashed -->
+            <polyline points="20,40 72,46 124,43 176,49 228,53 280,57 332,60" fill="none" stroke="#5F5E5A" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- Actual -->
+            <polyline points="20,40 72,50 124,56 176,66 228,75 280,85 332,93" fill="none" stroke="#3D3D9C" stroke-width="2"/>
+            <circle cx="20" cy="40" r="3" fill="#3D3D9C"/>
+            <circle cx="72" cy="50" r="3" fill="#3D3D9C"/>
+            <circle cx="124" cy="56" r="3" fill="#3D3D9C"/>
+            <circle cx="176" cy="66" r="3" fill="#3D3D9C"/>
+            <circle cx="228" cy="75" r="3" fill="#3D3D9C"/>
+            <circle cx="280" cy="85" r="3" fill="#3D3D9C"/>
+            <circle cx="332" cy="93" r="3" fill="#3D3D9C"/>
+            <text x="20" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">Apr</text>
+            <text x="72" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">May</text>
+            <text x="124" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">Jun</text>
+            <text x="176" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">Jul</text>
+            <text x="228" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">Aug</text>
+            <text x="280" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">Sep</text>
+            <text x="332" y="175" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">Oct</text>
+            <text x="20" y="20" font-size="9" fill="#5F5E5A" font-family="JetBrains Mono">per 1,000 lives</text>
+          </svg>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-line"></span> Actual</span>
+            <span class="legend-item"><span class="legend-line dashed"></span> Counterfactual</span>
+          </div>
+        </div>
+        <div class="methodology">Counterfactual estimated via matched cohort within Cumberland Valley pre-Yeji X (Q4 2025), adjusted for case mix and seasonal trend. Confidence interval ±$310K.</div>
+      </div>
+    </div>
+
+    <div class="eyebrow muted">Decomposition of savings</div>
+    <div class="decomp-grid">
+      <div class="decomp-card">
+        <div class="eyebrow muted">Avoided 30-d readmissions</div>
+        <div class="decomp-value">$1.42M</div>
+        <div class="decomp-sub">59% of total · 167 events</div>
+        <div class="decomp-bar"><div class="decomp-bar-fill" style="width: 59%;"></div></div>
+      </div>
+      <div class="decomp-card">
+        <div class="eyebrow muted">SNF over-stay reduction</div>
+        <div class="decomp-value">$612K</div>
+        <div class="decomp-sub">25% of total</div>
+        <div class="decomp-detail">Avg LOS 21.4d → 18.4d</div>
+        <div class="decomp-bar"><div class="decomp-bar-fill" style="width: 25%;"></div></div>
+      </div>
+      <div class="decomp-card">
+        <div class="eyebrow muted">Avoided ED revisits</div>
+        <div class="decomp-value">$284K</div>
+        <div class="decomp-sub">12% of total · 117 events</div>
+        <div class="decomp-bar"><div class="decomp-bar-fill" style="width: 12%;"></div></div>
+      </div>
+      <div class="decomp-card">
+        <div class="eyebrow muted">Skilled day right-sizing</div>
+        <div class="decomp-value">$94K</div>
+        <div class="decomp-sub">4% of total</div>
+        <div class="decomp-bar"><div class="decomp-bar-fill" style="width: 4%;"></div></div>
+      </div>
+    </div>
+
+    <div class="perf-grid">
+      <div>
+        <div class="eyebrow muted">Performance by intervention site · top 6</div>
+        <div class="rule-all" style="margin-top: 16px; background: var(--white);">
+          <div class="perf-row">
+            <div class="perf-site top">Magnolia SNF</div>
+            <div class="perf-interventions">312 int.</div>
+            <div class="perf-savings">$684K</div>
+            <div class="perf-rate-wrap">
+              <div class="perf-rate-track"><div class="perf-rate-fill" style="width: 78%;"></div></div>
+              <span class="perf-rate-pct">78%</span>
+            </div>
+          </div>
+          <div class="perf-row">
+            <div class="perf-site">Riverbend Post-Acute</div>
+            <div class="perf-interventions">247 int.</div>
+            <div class="perf-savings">$521K</div>
+            <div class="perf-rate-wrap">
+              <div class="perf-rate-track"><div class="perf-rate-fill" style="width: 71%;"></div></div>
+              <span class="perf-rate-pct">71%</span>
+            </div>
+          </div>
+          <div class="perf-row">
+            <div class="perf-site">Cumberland Internal · PCP</div>
+            <div class="perf-interventions">189 int.</div>
+            <div class="perf-savings">$398K</div>
+            <div class="perf-rate-wrap">
+              <div class="perf-rate-track"><div class="perf-rate-fill" style="width: 82%;"></div></div>
+              <span class="perf-rate-pct">82%</span>
+            </div>
+          </div>
+          <div class="perf-row">
+            <div class="perf-site">Stones River PCP</div>
+            <div class="perf-interventions">164 int.</div>
+            <div class="perf-savings">$287K</div>
+            <div class="perf-rate-wrap">
+              <div class="perf-rate-track"><div class="perf-rate-fill" style="width: 68%;"></div></div>
+              <span class="perf-rate-pct">68%</span>
+            </div>
+          </div>
+          <div class="perf-row">
+            <div class="perf-site">East Nashville Family</div>
+            <div class="perf-interventions">142 int.</div>
+            <div class="perf-savings">$241K</div>
+            <div class="perf-rate-wrap">
+              <div class="perf-rate-track"><div class="perf-rate-fill" style="width: 64%;"></div></div>
+              <span class="perf-rate-pct">64%</span>
+            </div>
+          </div>
+          <div class="perf-row">
+            <div class="perf-site">Belle Meade Primary</div>
+            <div class="perf-interventions">121 int.</div>
+            <div class="perf-savings">$179K</div>
+            <div class="perf-rate-wrap">
+              <div class="perf-rate-track"><div class="perf-rate-fill" style="width: 59%;"></div></div>
+              <span class="perf-rate-pct">59%</span>
+            </div>
+          </div>
+        </div>
+        <div class="perf-caption">Bar shows intervention completion rate · Magnolia leads on volume; Cumberland Internal on adherence.</div>
+      </div>
+
+      <div>
+        <div class="eyebrow muted">Economic share · Q3 settlement</div>
+        <div class="economic-card">
+          <div class="economic-rows">
+            <div class="economic-row">
+              <span class="economic-label strong">Total attributable savings</span>
+              <span class="economic-value strong">$2,410,000</span>
+            </div>
+            <div class="hairline"></div>
+            <div class="economic-row">
+              <span class="economic-label">ACO retained (88%)</span>
+              <span class="economic-value">$2,121,000</span>
+            </div>
+            <div class="economic-row">
+              <span class="economic-label">Yeji X outcome share (12%)</span>
+              <span class="economic-value">$289,000</span>
+            </div>
+            <div class="economic-row">
+              <span class="economic-label">Yeji X base PMPM</span>
+              <div style="text-align: right;">
+                <div class="economic-value">$53,295</div>
+                <div class="economic-note">$1.25 × 14,212 × 3mo</div>
+              </div>
+            </div>
+            <div class="hairline"></div>
+            <div class="economic-row" style="margin-top: 4px;">
+              <span class="economic-net">Net to ACO after Yeji X</span>
+              <span class="economic-net-value">$2,067,705</span>
+            </div>
+          </div>
+        </div>
+        <div class="roi-caption">ROI 6.0× · payback &lt; 1 quarter</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <span>Yeji X · Outcome attribution engine v0.5</span>
+      <span>Methodology audited · Milliman, Oct 2026</span>
+      <span>Page 1 / 12 · Full report in board packet</span>
+    </div>
+  </main>
+</div>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<div class="footer">
+  <div class="footer-left">
+    <svg width="14" height="14" viewBox="0 0 22 22">
+      <path d="M3 3 L11 11 M19 3 L11 11 L11 19" stroke="#5F5E5A" stroke-width="1.6" fill="none" stroke-linecap="square"/>
+    </svg>
+    <span>Yeji X</span>
+  </div>
+  <span class="ff-mono" id="page-num">01</span>
+  <span>Confidential · Cumberland Valley ACO instance</span>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const views = document.querySelectorAll('.view');
+  const pageNum = document.getElementById('page-num');
+  const numMap = { aco: '01', snf: '02', outcome: '03' };
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const view = tab.dataset.view;
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      views.forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + view).classList.add('active');
+      pageNum.textContent = numMap[view];
+    });
+  });
+</script>
+
+</body>
+</html>
